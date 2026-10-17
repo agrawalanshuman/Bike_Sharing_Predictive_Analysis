@@ -1,11 +1,11 @@
 {
   "notebooks": {
-    "TeamName_milestone2.ipynb": {
+    "Anshuman_milestone2.ipynb": {
       "executed_code_cells": 6,
       "embedded_png_outputs": 3,
       "errors": 0
     },
-    "TeamName_milestone3.ipynb": {
+    "Anshuman_milestone3.ipynb": {
       "executed_code_cells": 12,
       "embedded_png_outputs": 11,
       "errors": 0
@@ -17,11 +17,11 @@
     }
   },
   "pdfs": {
-    "TeamName_dryrun.pdf": {
+    "Anshuman_dryrun.pdf": {
       "pages": 10,
       "page_limit": 10
     },
-    "TeamName_memo.pdf": {
+    "Anshuman_memo.pdf": {
       "pages": 2,
       "page_limit": 2
     }
@@ -39,7 +39,7 @@
     "skipped": 0
   },
   "limitations": [
-    "TeamName and team member placeholders require user edits and review.",
+    "Team member placeholders require user edits and review.",
     "Colab execution is documented but not independently tested.",
     "Nominal 90% temporal intervals under-cover; no guaranteed future coverage.",
     "No publication, push, deployment, or Canvas submission has been performed."
@@ -47,7 +47,23 @@
   "generated_files": [
     {
       "file": ".gitignore",
-      "bytes": 71
+      "bytes": 482
+    },
+    {
+      "file": "Anshuman_dryrun.pdf",
+      "bytes": 545437
+    },
+    {
+      "file": "Anshuman_memo.pdf",
+      "bytes": 47494
+    },
+    {
+      "file": "Anshuman_milestone2.ipynb",
+      "bytes": 630367
+    },
+    {
+      "file": "Anshuman_milestone3.ipynb",
+      "bytes": 2028488
     },
     {
       "file": "BikeSharing_Final.ipynb",
@@ -55,23 +71,7 @@
     },
     {
       "file": "README.md",
-      "bytes": 10464
-    },
-    {
-      "file": "TeamName_dryrun.pdf",
-      "bytes": 545411
-    },
-    {
-      "file": "TeamName_memo.pdf",
-      "bytes": 47494
-    },
-    {
-      "file": "TeamName_milestone2.ipynb",
-      "bytes": 630367
-    },
-    {
-      "file": "TeamName_milestone3.ipynb",
-      "bytes": 2028488
+      "bytes": 10466
     },
     {
       "file": "data/PROVENANCE.md",
@@ -95,7 +95,7 @@
     },
     {
       "file": "milestone1_discussion_guidance.md",
-      "bytes": 866
+      "bytes": 887
     },
     {
       "file": "model_card.md",
@@ -183,7 +183,7 @@
     },
     {
       "file": "results/verification.json",
-      "bytes": 5402
+      "bytes": 5403
     },
     {
       "file": "scripts/build_documents.py",
@@ -203,7 +203,7 @@
     },
     {
       "file": "scripts/verify_artifacts.py",
-      "bytes": 3624
+      "bytes": 3611
     },
     {
       "file": "src/__init__.py",

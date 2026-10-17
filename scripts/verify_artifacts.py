@@ -7,11 +7,11 @@ import pandas as pd
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 ROOT=Path(__file__).resolve().parents[1]
 report={'notebooks':{},'pdfs':{},'results':{},'tests':{},'limitations':[
-    'TeamName and team member placeholders require user edits and review.',
+    'Team member placeholders require user edits and review.',
     'Colab execution is documented but not independently tested.',
     'Nominal 90% temporal intervals under-cover; no guaranteed future coverage.',
     'No publication, push, deployment, or Canvas submission has been performed.']}
-for name in ['TeamName_milestone2.ipynb','TeamName_milestone3.ipynb','BikeSharing_Final.ipynb']:
+for name in ['Anshuman_milestone2.ipynb','Anshuman_milestone3.ipynb','BikeSharing_Final.ipynb']:
     nb=nbformat.read(ROOT/name,as_version=4);nbformat.validate(nb)
     cells=[c for c in nb.cells if c.cell_type=='code']
     assert cells and all(c.execution_count is not None for c in cells)
@@ -19,7 +19,7 @@ for name in ['TeamName_milestone2.ipynb','TeamName_milestone3.ipynb','BikeSharin
     images=sum('image/png' in o.get('data',{}) for c in cells for o in c.outputs)
     assert images>=3
     report['notebooks'][name]={'executed_code_cells':len(cells),'embedded_png_outputs':images,'errors':0}
-for name,limit in [('TeamName_dryrun.pdf',10),('TeamName_memo.pdf',2)]:
+for name,limit in [('Anshuman_dryrun.pdf',10),('Anshuman_memo.pdf',2)]:
     info=subprocess.check_output(['pdfinfo',str(ROOT/name)],text=True)
     pages=int(re.search(r'^Pages:\s+(\d+)',info,re.M).group(1))
     assert 0<pages<=limit

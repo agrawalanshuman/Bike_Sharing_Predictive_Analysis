@@ -9,7 +9,7 @@ def model_card(d,a):
     m=a['metrics']; it=a['intervals']; s=a['slices'].query("model == 'boosting'")
     w=s.loc[s.MAE.idxmax()]
     return f'''# Model card — next-day hourly system-wide rentals
-**Owner:** TeamName, [NAMES TO FILL IN]; hypothetical operations manager is the decision owner.
+**Owner:** Anshuman, [NAMES TO FILL IN]; hypothetical operations manager is the decision owner.
 **Intended use:** research prototype for aggregate hourly service-capacity and staffing planning at 11:59 PM for the next 24 hourly slots. Not station allocation or autonomous deployment.
 **Data and target:** UCI Capital Bikeshare 2011–2012, {d['audit']['source_rows']:,} observed hours; target `cnt`, completed rentals. Fit {d['audit']['fit_start']}–{d['audit']['fit_end']} ({len(d['fit']):,} rows); calibration {d['audit']['calibration_start']}–{d['audit']['calibration_end']}; test {d['audit']['test_start']}–{d['audit']['test_end']} ({len(d['test']):,} comparable hours).
 **Methods:** seasonal naive; fixed-alpha Ridge pipeline; HistGradientBoosting pipeline tuned on three training-only chronological folds. Calendar and pre-issuance demand features only; no target components or future observed weather. Daily lags update, model parameters stay frozen.
@@ -44,8 +44,8 @@ def generate_pdfs():
     cases=json.loads((ROOT/'results/shap_cases.json').read_text())
     navy=HexColor('#182e45');teal=HexColor('#127d92');gray=HexColor('#536474')
     W,H=960,540
-    cv=canvas.Canvas(str(ROOT/'TeamName_dryrun.pdf'),pagesize=(W,H))
-    cv.setTitle('Next-Day Hourly Bike-Sharing Demand — TeamName')
+    cv=canvas.Canvas(str(ROOT/'Anshuman_dryrun.pdf'),pagesize=(W,H))
+    cv.setTitle('Next-Day Hourly Bike-Sharing Demand — Anshuman')
     def wrap(text,size=19,width=860,color=navy,x=50,y=400):
         import textwrap
         cv.setFillColor(color);cv.setFont('BodyFont',size)
@@ -62,7 +62,7 @@ def generate_pdfs():
     def begin(number,title,kicker):
         cv.setFillColor(white);cv.rect(0,0,W,H,fill=1,stroke=0)
         cv.setFillColor(teal);cv.rect(0,H-12,W,12,fill=1,stroke=0)
-        cv.setFont('BodyBold',12);cv.drawString(50,H-44,'ISOM 835  /  TEAMNAME')
+        cv.setFont('BodyBold',12);cv.drawString(50,H-44,'ISOM 835  /  ANSHUMAN')
         cv.setFillColor(navy);cv.setFont('BodyBold',27);cv.drawString(50,H-91,title)
         wrap(kicker,14,860,gray,y=H-122)
         cv.setFillColor(gray);cv.setFont('BodyFont',10)
@@ -130,7 +130,7 @@ def generate_pdfs():
     story=[]
     def para(text,style='MemoText'):story.append(Paragraph(text,styles[style]))
     para('Next-day system-wide bike-sharing capacity planning','Title')
-    para('To: Hypothetical Bike-Sharing Operations Manager<br/>From: TeamName — [NAMES TO FILL IN]<br/>Subject: Historical forecasting evidence and a proposed pilot')
+    para('To: Hypothetical Bike-Sharing Operations Manager<br/>From: Anshuman — [NAMES TO FILL IN]<br/>Subject: Historical forecasting evidence and a proposed pilot')
     para('Question','MemoHeading')
     para('Can next-day hourly forecasts improve aggregate rental-service capacity planning over repeating last week? At 11:59 PM, the proposed workflow predicts each of the next calendar day\'s 24 hourly rental counts. The decision is a system-wide hourly throughput plan to inform staffing review. This dataset cannot determine how many bicycles to place at a particular station.')
     para('Data and Model','MemoHeading')
@@ -146,7 +146,7 @@ def generate_pdfs():
     para(f'Three genuine SHAP waterfalls explain low, moderate, and high forecasts. Chronologically calibrated MAPIE intervals target 90% coverage but achieve only {interval["empirical_coverage"]:.2%}, with average width {interval["average_width"]:.1f} rentals. Serial dependence and changing conditions mean ordinary exchangeability-based guarantees do not apply automatically. The worst boosting slice is {w["dimension"]}={w["slice"]}, with MAE {w.MAE:.1f} and RMSE {w.RMSE:.1f} across {int(w["n"])} hours. Weather changes, special events, missing history, reporting delays, and demand shifts remain important failure modes.')
     para('Before deployment, test the frozen decision rule prospectively and confirm that counts are available by issuance. Monitor missing hours, weekly MAE and RMSE against the concurrent baseline, commute-hour errors, interval coverage and width, and assumed-cost outcomes. Review sustained coverage below 90% or errors above baseline for two weeks; recalibrate or retrain using chronological data. Obtain station inventory and unmet-demand evidence before making station allocation claims. This project is a research prototype; it has not been deployed or submitted. OpenAI Codex assisted with coding, analysis and drafting; the team must verify and own the work.')
     para('Source: Fanaee-T &amp; Gama (2013), Event labeling combining ensemble detectors and background knowledge, doi:10.1007/s13748-013-0040-3. UCI Bike Sharing dataset, dataset 275. Full methods, plots, assumptions and checks accompany the executed notebooks.')
-    doc=SimpleDocTemplate(str(ROOT/'TeamName_memo.pdf'),pagesize=letter,rightMargin=48,leftMargin=48,topMargin=42,bottomMargin=42)
+    doc=SimpleDocTemplate(str(ROOT/'Anshuman_memo.pdf'),pagesize=letter,rightMargin=48,leftMargin=48,topMargin=42,bottomMargin=42)
     def footer(canvas,doc):
-        canvas.setFont('BodyFont',9);canvas.setFillColor(gray);canvas.drawString(48,22,f'TeamName | ISOM 835 | {doc.page}')
+        canvas.setFont('BodyFont',9);canvas.setFillColor(gray);canvas.drawString(48,22,f'Anshuman | ISOM 835 | {doc.page}')
     doc.build(story,onFirstPage=footer,onLaterPages=footer)

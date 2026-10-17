@@ -1,5 +1,5 @@
 # Model card — next-day hourly system-wide rentals
-**Owner:** TeamName, [NAMES TO FILL IN]; hypothetical operations manager is the decision owner.
+**Owner:** Anshuman, [NAMES TO FILL IN]; hypothetical operations manager is the decision owner.
 **Intended use:** research prototype for aggregate hourly service-capacity and staffing planning at 11:59 PM for the next 24 hourly slots. Not station allocation or autonomous deployment.
 **Data and target:** UCI Capital Bikeshare 2011–2012, 17,379 observed hours; target `cnt`, completed rentals. Fit 2011-01-08 23:00:00–2012-10-07 23:00:00 (15,195 rows); calibration 2012-10-08 00:00:00–2012-11-04 23:00:00; test 2012-11-05 00:00:00–2012-12-30 23:00:00 (1,302 comparable hours).
 **Methods:** seasonal naive; fixed-alpha Ridge pipeline; HistGradientBoosting pipeline tuned on three training-only chronological folds. Calendar and pre-issuance demand features only; no target components or future observed weather. Daily lags update, model parameters stay frozen.

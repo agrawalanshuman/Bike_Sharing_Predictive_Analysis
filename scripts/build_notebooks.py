@@ -7,7 +7,7 @@ def md(s):return nbf.v4.new_markdown_cell(s.strip())
 def code(s):return nbf.v4.new_code_cell(s.strip())
 
 intro='''# Predicting Next-Day Hourly Bike-Sharing Demand Using Python and Machine Learning
-**ISOM 835 · TeamName · [NAMES TO FILL IN]**
+**ISOM 835 · Anshuman · [NAMES TO FILL IN]**
 
 One row is one system-wide hour; the regression target is `cnt`, observed rental trips.
 At **11:59 PM on the previous calendar day**, forecast all **24 hourly counts for the next day**
@@ -224,7 +224,7 @@ card = model_card(d, a)
 (ROOT/'model_card.md').write_text(card)
 display(Markdown(card))''')]
 
-for filename,advanced_flag in [('TeamName_milestone2.ipynb',False),('TeamName_milestone3.ipynb',True),('BikeSharing_Final.ipynb',True)]:
+for filename,advanced_flag in [('Anshuman_milestone2.ipynb',False),('Anshuman_milestone3.ipynb',True),('BikeSharing_Final.ipynb',True)]:
     cells=common()+(extended() if advanced_flag else [])+[md(ai)]
     nb=nbf.v4.new_notebook(cells=cells,metadata={'kernelspec':{'display_name':'Python 3','language':'python','name':'python3'},'language_info':{'name':'python','version':'3.12'}})
     nbf.write(nb,ROOT/filename)

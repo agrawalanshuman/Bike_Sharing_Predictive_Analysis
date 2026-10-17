@@ -7,4 +7,4 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT))
 from src.documents import generate_pdfs
 generate_pdfs()
-print('Generated TeamName_dryrun.pdf and TeamName_memo.pdf from results/.')
+print('Generated Anshuman_dryrun.pdf and Anshuman_memo.pdf from results/.')

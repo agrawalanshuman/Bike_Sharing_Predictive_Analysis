@@ -1,6 +1,6 @@
 # Predicting Next-Day Hourly Bike-Sharing Demand
 
-ISOM 835 Predictive Analytics and Machine Learning · **TeamName** · **[NAMES TO FILL IN]**
+ISOM 835 Predictive Analytics and Machine Learning · **Anshuman** · **[NAMES TO FILL IN]**
 
 At 11:59 PM, forecast each of the next calendar day's 24 system-wide hourly rental counts. A hypothetical operations manager uses the forecasts to review aggregate service capacity and staffing. This is regression/forecasting of completed rentals, not classification, latent unmet demand, unique bicycles, or individual station demand.
 
@@ -41,11 +41,11 @@ The model assumes recorded hourly counts are finalized before the 11:59 PM issue
 |---|---|
 | `milestone1_canvas.txt` | Exactly one team/problem/data paragraph, due November 2 |
 | `milestone1_discussion_guidance.md` | Participation checklist; no Canvas action taken |
-| `TeamName_milestone2.ipynb` | Executed data audit, EDA, leakage controls, seasonal baseline, first regression |
-| `TeamName_milestone3.ipynb` | Executed tuning, MAPIE intervals, SHAP, slices, cost sensitivity, model card |
+| `Anshuman_milestone2.ipynb` | Executed data audit, EDA, leakage controls, seasonal baseline, first regression |
+| `Anshuman_milestone3.ipynb` | Executed tuning, MAPIE intervals, SHAP, slices, cost sensitivity, model card |
 | `BikeSharing_Final.ipynb` | Executed integrated final workflow |
-| `TeamName_dryrun.pdf` | Ten-slide business presentation, for an eight-minute talk |
-| `TeamName_memo.pdf` | Two-page memo with all five required sections |
+| `Anshuman_dryrun.pdf` | Ten-slide business presentation, for an eight-minute talk |
+| `Anshuman_memo.pdf` | Two-page memo with all five required sections |
 | `model_card.md` | Concise intended-use, evaluation, limitations, monitoring card |
 | `src/forecasting.py` | Readable audited feature/model/evaluation code and 24-hour forecast API |
 | `src/plots.py`, `src/documents.py` | Real-result figures, SHAP, slides and memo generation |
@@ -83,8 +83,8 @@ Files are prepared locally; **nothing has been pushed, published, or submitted**
 After *you* publish the repository to `main`, open:
 
 - https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/BikeSharing_Final.ipynb
-- https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/TeamName_milestone2.ipynb
-- https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/TeamName_milestone3.ipynb
+- https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/Anshuman_milestone2.ipynb
+- https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/Anshuman_milestone3.ipynb
 
 These are prospective links and will not work until you publish. For Colab, first clone the published repository into the runtime, change into its root, install requirements, and restart the runtime if it already imported conflicting package versions:
 
@@ -98,7 +98,7 @@ Then run the opened notebook from the repository root. Local cloud execution is 
 
 ## Course dates, sources and honesty
 
-Milestone 2: November 23; Milestone 3: November 30; dry-run slides: December 7; final deliverables: December 14, 2026. The course project source lists the final deadline at 5 PM; a Session 11 note conflicts, so verify Canvas. TeamName and member names remain intentional placeholders. Each teammate must review and explain the work, complete discussion participation, and submit personally.
+Milestone 2: November 23; Milestone 3: November 30; dry-run slides: December 7; final deliverables: December 14, 2026. The course project source lists the final deadline at 5 PM; a Session 11 note conflicts, so verify Canvas. The team name is Anshuman; member names remain placeholders. Each teammate must review and explain the work, complete discussion participation, and submit personally.
 
 OpenAI Codex assisted with implementation, tests, analysis and drafting. All scores, intervals, SHAP plots and figures come from real executed code. The direct course website/Colab requests were blocked by the egress policy; the corresponding public course GitHub source was read instead. See `references/course_resources.md`.
 
