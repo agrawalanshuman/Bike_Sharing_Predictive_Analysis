@@ -1,0 +1,53 @@
+{
+  "audit": {
+    "source_rows": 17379,
+    "source_columns": 17,
+    "source_start": "2011-01-01 00:00:00",
+    "source_end": "2012-12-31 23:00:00",
+    "full_grid_hours": 17544,
+    "missing_hours": 165,
+    "sha256_hour_csv": "e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f",
+    "fit_start": "2011-01-08 23:00:00",
+    "fit_end": "2012-10-07 23:00:00",
+    "fit_rows": 15195,
+    "calibration_start": "2012-10-08 00:00:00",
+    "calibration_end": "2012-11-04 23:00:00",
+    "calibration_rows": 636,
+    "test_start": "2012-11-05 00:00:00",
+    "test_end": "2012-12-30 23:00:00",
+    "test_rows": 1302,
+    "test_scheduled_hours": 1344,
+    "test_missing_actuals": 4,
+    "test_missing_week_lag_with_actual": 38,
+    "terminal_hours_not_tested": 24
+  },
+  "best_params": {
+    "model__max_leaf_nodes": 15,
+    "model__learning_rate": 0.08,
+    "model__l2_regularization": 10.0
+  },
+  "best_cv_MAE": 53.783997233467176,
+  "cv_boundaries": [
+    {
+      "train_end": "2012-07-14 23:00:00",
+      "validation_start": "2012-07-16 00:00:00",
+      "validation_end": "2012-08-12 23:00:00"
+    },
+    {
+      "train_end": "2012-08-11 23:00:00",
+      "validation_start": "2012-08-13 00:00:00",
+      "validation_end": "2012-09-09 23:00:00"
+    },
+    {
+      "train_end": "2012-09-08 23:00:00",
+      "validation_start": "2012-09-10 00:00:00",
+      "validation_end": "2012-10-07 23:00:00"
+    }
+  ],
+  "intervals": {
+    "nominal_coverage": 0.9,
+    "empirical_coverage": 0.8563748079877113,
+    "average_width": 251.41897811767126,
+    "calibration_rows": 636
+  }
+}

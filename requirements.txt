@@ -1,0 +1,15 @@
+# Tested with Python 3.12; exact direct-dependency versions used for reported results.
+numpy==2.3.5
+pandas==2.2.3
+scipy==1.17.0
+matplotlib==3.10.8
+scikit-learn==1.8.0
+shap==0.54.1
+mapie==1.5.0
+nbformat==5.11.1
+nbclient==0.11.0
+ipykernel==7.4.0
+reportlab==4.4.9
+pytest==9.1.1
+joblib==1.5.3
+pillow==12.3.0

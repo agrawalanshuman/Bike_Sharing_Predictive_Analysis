@@ -1,0 +1,935 @@
+[
+  {
+    "case": "low",
+    "timestamp": "2012-12-30 04:00:00",
+    "raw_prediction": -15.629359687438638,
+    "prediction": 0,
+    "actual": 7.0,
+    "base_value": 187.78595143523526,
+    "explanation": "For the low-demand case at 2012-12-30 04:00:00, the model forecasts 0.0 rentals; the largest local contributions are lag_168 (-91.9 rentals) and lag_24 (-42.4 rentals). These inputs move this prediction relative to the model reference of 187.8 rentals; they describe the model's reasoning, not the causal effect of changing capacity or the calendar.",
+    "features": [
+      {
+        "name": "numeric__lag_24",
+        "value": 3.0,
+        "SHAP": -42.386656195408435
+      },
+      {
+        "name": "numeric__lag_48",
+        "value": 4.0,
+        "SHAP": -1.5341825702924174
+      },
+      {
+        "name": "numeric__lag_168",
+        "value": 4.0,
+        "SHAP": -91.90498114173411
+      },
+      {
+        "name": "numeric__roll_mean_7d",
+        "value": 66.92168674698796,
+        "SHAP": 6.254193068916388
+      },
+      {
+        "name": "numeric__roll_max_7d",
+        "value": 271.0,
+        "SHAP": -4.985965383679448
+      },
+      {
+        "name": "numeric__roll_count_7d",
+        "value": 166.0,
+        "SHAP": 0.9363906636440448
+      },
+      {
+        "name": "numeric__commute_workday",
+        "value": 0.0,
+        "SHAP": -15.146381501824603
+      },
+      {
+        "name": "numeric__hour_sin",
+        "value": 0.8660254037844386,
+        "SHAP": -27.790898241673823
+      },
+      {
+        "name": "numeric__hour_cos",
+        "value": 0.5000000000000001,
+        "SHAP": -10.11217085400094
+      },
+      {
+        "name": "numeric__trend_days",
+        "value": 729.1666666666666,
+        "SHAP": -1.9805323166846562
+      },
+      {
+        "name": "numeric__missingindicator_lag_24",
+        "value": 0.0,
+        "SHAP": 0.0656211054386111
+      },
+      {
+        "name": "numeric__missingindicator_lag_48",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "numeric__missingindicator_lag_168",
+        "value": 0.0,
+        "SHAP": 0.25659893463059935
+      },
+      {
+        "name": "calendar__hour_0",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_2",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_3",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_4",
+        "value": 1.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_5",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_6",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_7",
+        "value": 0.0,
+        "SHAP": 0.10867382915629088
+      },
+      {
+        "name": "calendar__hour_8",
+        "value": 0.0,
+        "SHAP": -0.43697816947445195
+      },
+      {
+        "name": "calendar__hour_9",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_10",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_11",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_12",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_13",
+        "value": 0.0,
+        "SHAP": -0.0302558863891133
+      },
+      {
+        "name": "calendar__hour_14",
+        "value": 0.0,
+        "SHAP": 0.006105191753570832
+      },
+      {
+        "name": "calendar__hour_15",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_16",
+        "value": 0.0,
+        "SHAP": -0.03647834724015495
+      },
+      {
+        "name": "calendar__hour_17",
+        "value": 0.0,
+        "SHAP": -0.6279123530714867
+      },
+      {
+        "name": "calendar__hour_18",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_19",
+        "value": 0.0,
+        "SHAP": -0.03146392011762944
+      },
+      {
+        "name": "calendar__hour_20",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_21",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_22",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_23",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__dow_0",
+        "value": 0.0,
+        "SHAP": 0.48787950522995155
+      },
+      {
+        "name": "calendar__dow_1",
+        "value": 0.0,
+        "SHAP": 0.8263690068255505
+      },
+      {
+        "name": "calendar__dow_2",
+        "value": 0.0,
+        "SHAP": 0.2168157173641062
+      },
+      {
+        "name": "calendar__dow_3",
+        "value": 0.0,
+        "SHAP": -0.04142723468630256
+      },
+      {
+        "name": "calendar__dow_4",
+        "value": 0.0,
+        "SHAP": 0.317302967520697
+      },
+      {
+        "name": "calendar__dow_5",
+        "value": 0.0,
+        "SHAP": -0.32227729282995643
+      },
+      {
+        "name": "calendar__dow_6",
+        "value": 1.0,
+        "SHAP": -13.708642356223908
+      },
+      {
+        "name": "calendar__month_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__month_2",
+        "value": 0.0,
+        "SHAP": 0.021951748970283104
+      },
+      {
+        "name": "calendar__month_3",
+        "value": 0.0,
+        "SHAP": -0.0018533256679406202
+      },
+      {
+        "name": "calendar__month_4",
+        "value": 0.0,
+        "SHAP": -0.09411712926314197
+      },
+      {
+        "name": "calendar__month_5",
+        "value": 0.0,
+        "SHAP": -0.0036672254443904173
+      },
+      {
+        "name": "calendar__month_6",
+        "value": 0.0,
+        "SHAP": -0.2882527621509267
+      },
+      {
+        "name": "calendar__month_7",
+        "value": 0.0,
+        "SHAP": -0.0032405865571313443
+      },
+      {
+        "name": "calendar__month_8",
+        "value": 0.0,
+        "SHAP": 0.015455366366195745
+      },
+      {
+        "name": "calendar__month_9",
+        "value": 0.0,
+        "SHAP": -0.24115494877039542
+      },
+      {
+        "name": "calendar__month_10",
+        "value": 0.0,
+        "SHAP": 0.09617581177487373
+      },
+      {
+        "name": "calendar__month_11",
+        "value": 0.0,
+        "SHAP": 0.0049123472400780365
+      },
+      {
+        "name": "calendar__month_12",
+        "value": 1.0,
+        "SHAP": -2.1795163624363467
+      },
+      {
+        "name": "calendar__holiday_0.0",
+        "value": 1.0,
+        "SHAP": -0.029446362593958164
+      },
+      {
+        "name": "calendar__holiday_1.0",
+        "value": 0.0,
+        "SHAP": -0.003143918454250722
+      },
+      {
+        "name": "calendar__workingday_0",
+        "value": 1.0,
+        "SHAP": 0.5997646058341701
+      },
+      {
+        "name": "calendar__workingday_1",
+        "value": 0.0,
+        "SHAP": 0.29207539333055066
+      }
+    ]
+  },
+  {
+    "case": "moderate",
+    "timestamp": "2012-11-24 20:00:00",
+    "raw_prediction": 212.18976760518768,
+    "prediction": 212.18976760518768,
+    "actual": 58.0,
+    "base_value": 187.78595143523526,
+    "explanation": "For the moderate-demand case at 2012-11-24 20:00:00, the model forecasts 212.2 rentals; the largest local contributions are trend_days (+42.4 rentals) and hour_sin (+23.6 rentals). These inputs move this prediction relative to the model reference of 187.8 rentals; they describe the model's reasoning, not the causal effect of changing capacity or the calendar.",
+    "features": [
+      {
+        "name": "numeric__lag_24",
+        "value": 142.0,
+        "SHAP": -14.858693808065198
+      },
+      {
+        "name": "numeric__lag_48",
+        "value": 52.0,
+        "SHAP": -2.0359825154129356
+      },
+      {
+        "name": "numeric__lag_168",
+        "value": 172.0,
+        "SHAP": -5.3343285628576975
+      },
+      {
+        "name": "numeric__roll_mean_7d",
+        "value": 197.23809523809524,
+        "SHAP": 8.865394382528839
+      },
+      {
+        "name": "numeric__roll_max_7d",
+        "value": 665.0,
+        "SHAP": -0.47743177137653803
+      },
+      {
+        "name": "numeric__roll_count_7d",
+        "value": 168.0,
+        "SHAP": -0.5789987937821065
+      },
+      {
+        "name": "numeric__commute_workday",
+        "value": 0.0,
+        "SHAP": -13.049848918246129
+      },
+      {
+        "name": "numeric__hour_sin",
+        "value": -0.8660254037844386,
+        "SHAP": 23.62902163412824
+      },
+      {
+        "name": "numeric__hour_cos",
+        "value": 0.5000000000000001,
+        "SHAP": -23.34769070939728
+      },
+      {
+        "name": "numeric__trend_days",
+        "value": 693.8333333333334,
+        "SHAP": 42.44553485128218
+      },
+      {
+        "name": "numeric__missingindicator_lag_24",
+        "value": 0.0,
+        "SHAP": 0.13860731683573274
+      },
+      {
+        "name": "numeric__missingindicator_lag_48",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "numeric__missingindicator_lag_168",
+        "value": 0.0,
+        "SHAP": 0.5505840864556508
+      },
+      {
+        "name": "calendar__hour_0",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_2",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_3",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_4",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_5",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_6",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_7",
+        "value": 0.0,
+        "SHAP": 0.2390469486899226
+      },
+      {
+        "name": "calendar__hour_8",
+        "value": 0.0,
+        "SHAP": -0.34993494195286556
+      },
+      {
+        "name": "calendar__hour_9",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_10",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_11",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_12",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_13",
+        "value": 0.0,
+        "SHAP": -0.043088860764966784
+      },
+      {
+        "name": "calendar__hour_14",
+        "value": 0.0,
+        "SHAP": 0.006105191753570832
+      },
+      {
+        "name": "calendar__hour_15",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_16",
+        "value": 0.0,
+        "SHAP": -0.03647834724015495
+      },
+      {
+        "name": "calendar__hour_17",
+        "value": 0.0,
+        "SHAP": -0.7605229338155632
+      },
+      {
+        "name": "calendar__hour_18",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_19",
+        "value": 0.0,
+        "SHAP": -0.06742603113165724
+      },
+      {
+        "name": "calendar__hour_20",
+        "value": 1.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_21",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_22",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_23",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__dow_0",
+        "value": 0.0,
+        "SHAP": -0.3807391992878839
+      },
+      {
+        "name": "calendar__dow_1",
+        "value": 0.0,
+        "SHAP": 2.019012879957652
+      },
+      {
+        "name": "calendar__dow_2",
+        "value": 0.0,
+        "SHAP": 0.19888765209896425
+      },
+      {
+        "name": "calendar__dow_3",
+        "value": 0.0,
+        "SHAP": -0.02352822836929869
+      },
+      {
+        "name": "calendar__dow_4",
+        "value": 0.0,
+        "SHAP": 0.5390362728814614
+      },
+      {
+        "name": "calendar__dow_5",
+        "value": 1.0,
+        "SHAP": 3.298534750396995
+      },
+      {
+        "name": "calendar__dow_6",
+        "value": 0.0,
+        "SHAP": 5.618049986003851
+      },
+      {
+        "name": "calendar__month_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__month_2",
+        "value": 0.0,
+        "SHAP": 0.1585497604386259
+      },
+      {
+        "name": "calendar__month_3",
+        "value": 0.0,
+        "SHAP": -0.0018533256679406202
+      },
+      {
+        "name": "calendar__month_4",
+        "value": 0.0,
+        "SHAP": -0.049788039375534464
+      },
+      {
+        "name": "calendar__month_5",
+        "value": 0.0,
+        "SHAP": -0.013656305961877618
+      },
+      {
+        "name": "calendar__month_6",
+        "value": 0.0,
+        "SHAP": -0.4341276554480165
+      },
+      {
+        "name": "calendar__month_7",
+        "value": 0.0,
+        "SHAP": 0.0006879809606978448
+      },
+      {
+        "name": "calendar__month_8",
+        "value": 0.0,
+        "SHAP": 0.030437405254690495
+      },
+      {
+        "name": "calendar__month_9",
+        "value": 0.0,
+        "SHAP": -0.15308436581243268
+      },
+      {
+        "name": "calendar__month_10",
+        "value": 0.0,
+        "SHAP": 0.20845727822622384
+      },
+      {
+        "name": "calendar__month_11",
+        "value": 1.0,
+        "SHAP": -0.09255436504913057
+      },
+      {
+        "name": "calendar__month_12",
+        "value": 0.0,
+        "SHAP": 0.34171882848515533
+      },
+      {
+        "name": "calendar__holiday_0.0",
+        "value": 1.0,
+        "SHAP": -0.019452157346441935
+      },
+      {
+        "name": "calendar__holiday_1.0",
+        "value": 0.0,
+        "SHAP": -0.008148738549937444
+      },
+      {
+        "name": "calendar__workingday_0",
+        "value": 1.0,
+        "SHAP": -0.9997989592173332
+      },
+      {
+        "name": "calendar__workingday_1",
+        "value": 0.0,
+        "SHAP": -0.7666935022973119
+      }
+    ]
+  },
+  {
+    "case": "high",
+    "timestamp": "2012-11-07 17:00:00",
+    "raw_prediction": 835.2231022427046,
+    "prediction": 835.2231022427046,
+    "actual": 517.0,
+    "base_value": 187.78595143523526,
+    "explanation": "For the high-demand case at 2012-11-07 17:00:00, the model forecasts 835.2 rentals; the largest local contributions are lag_168 (+280.1 rentals) and trend_days (+96.1 rentals). These inputs move this prediction relative to the model reference of 187.8 rentals; they describe the model's reasoning, not the causal effect of changing capacity or the calendar.",
+    "features": [
+      {
+        "name": "numeric__lag_24",
+        "value": 627.0,
+        "SHAP": 83.74019554818237
+      },
+      {
+        "name": "numeric__lag_48",
+        "value": 638.0,
+        "SHAP": 6.363687139133476
+      },
+      {
+        "name": "numeric__lag_168",
+        "value": 723.0,
+        "SHAP": 280.12781816834115
+      },
+      {
+        "name": "numeric__roll_mean_7d",
+        "value": 223.16666666666666,
+        "SHAP": 18.32335483172651
+      },
+      {
+        "name": "numeric__roll_max_7d",
+        "value": 723.0,
+        "SHAP": -3.2341143713143174
+      },
+      {
+        "name": "numeric__roll_count_7d",
+        "value": 168.0,
+        "SHAP": -1.6711428990306019
+      },
+      {
+        "name": "numeric__commute_workday",
+        "value": 1.0,
+        "SHAP": 75.89063493196065
+      },
+      {
+        "name": "numeric__hour_sin",
+        "value": -0.9659258262890683,
+        "SHAP": 53.80814093139067
+      },
+      {
+        "name": "numeric__hour_cos",
+        "value": -0.25881904510252063,
+        "SHAP": 9.419269406313642
+      },
+      {
+        "name": "numeric__trend_days",
+        "value": 676.7083333333334,
+        "SHAP": 96.0878023998268
+      },
+      {
+        "name": "numeric__missingindicator_lag_24",
+        "value": 0.0,
+        "SHAP": 0.06787159628020692
+      },
+      {
+        "name": "numeric__missingindicator_lag_48",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "numeric__missingindicator_lag_168",
+        "value": 0.0,
+        "SHAP": 0.14483512850795757
+      },
+      {
+        "name": "calendar__hour_0",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_2",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_3",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_4",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_5",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_6",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_7",
+        "value": 0.0,
+        "SHAP": 0.7570418496439207
+      },
+      {
+        "name": "calendar__hour_8",
+        "value": 0.0,
+        "SHAP": -0.41404484350144716
+      },
+      {
+        "name": "calendar__hour_9",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_10",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_11",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_12",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_13",
+        "value": 0.0,
+        "SHAP": 0.03377341739542047
+      },
+      {
+        "name": "calendar__hour_14",
+        "value": 0.0,
+        "SHAP": 0.014033702542290668
+      },
+      {
+        "name": "calendar__hour_15",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_16",
+        "value": 0.0,
+        "SHAP": -0.00573801457968137
+      },
+      {
+        "name": "calendar__hour_17",
+        "value": 1.0,
+        "SHAP": 13.398381890851477
+      },
+      {
+        "name": "calendar__hour_18",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_19",
+        "value": 0.0,
+        "SHAP": -0.11824433061159251
+      },
+      {
+        "name": "calendar__hour_20",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_21",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_22",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__hour_23",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__dow_0",
+        "value": 0.0,
+        "SHAP": -1.2636734069820912
+      },
+      {
+        "name": "calendar__dow_1",
+        "value": 0.0,
+        "SHAP": 1.89689389362597
+      },
+      {
+        "name": "calendar__dow_2",
+        "value": 1.0,
+        "SHAP": -3.300213196241894
+      },
+      {
+        "name": "calendar__dow_3",
+        "value": 0.0,
+        "SHAP": -0.14924430640340391
+      },
+      {
+        "name": "calendar__dow_4",
+        "value": 0.0,
+        "SHAP": 5.2445549187849325
+      },
+      {
+        "name": "calendar__dow_5",
+        "value": 0.0,
+        "SHAP": 0.23505829364705869
+      },
+      {
+        "name": "calendar__dow_6",
+        "value": 0.0,
+        "SHAP": 3.0057983347278294
+      },
+      {
+        "name": "calendar__month_1",
+        "value": 0.0,
+        "SHAP": 0.0
+      },
+      {
+        "name": "calendar__month_2",
+        "value": 0.0,
+        "SHAP": 0.3485008793738631
+      },
+      {
+        "name": "calendar__month_3",
+        "value": 0.0,
+        "SHAP": -0.08679545399375488
+      },
+      {
+        "name": "calendar__month_4",
+        "value": 0.0,
+        "SHAP": -0.14773953871481446
+      },
+      {
+        "name": "calendar__month_5",
+        "value": 0.0,
+        "SHAP": -0.04025326335474638
+      },
+      {
+        "name": "calendar__month_6",
+        "value": 0.0,
+        "SHAP": -0.5031902187883662
+      },
+      {
+        "name": "calendar__month_7",
+        "value": 0.0,
+        "SHAP": -0.20442222655530212
+      },
+      {
+        "name": "calendar__month_8",
+        "value": 0.0,
+        "SHAP": 0.002542277895815922
+      },
+      {
+        "name": "calendar__month_9",
+        "value": 0.0,
+        "SHAP": -0.23077481348960335
+      },
+      {
+        "name": "calendar__month_10",
+        "value": 0.0,
+        "SHAP": 0.7333157935196094
+      },
+      {
+        "name": "calendar__month_11",
+        "value": 1.0,
+        "SHAP": -0.3092533783571607
+      },
+      {
+        "name": "calendar__month_12",
+        "value": 0.0,
+        "SHAP": 1.3764248861706552
+      },
+      {
+        "name": "calendar__holiday_0.0",
+        "value": 1.0,
+        "SHAP": 0.2087461193276107
+      },
+      {
+        "name": "calendar__holiday_1.0",
+        "value": 0.0,
+        "SHAP": 0.03457799897348852
+      },
+      {
+        "name": "calendar__workingday_0",
+        "value": 0.0,
+        "SHAP": 7.50667394462554
+      },
+      {
+        "name": "calendar__workingday_1",
+        "value": 1.0,
+        "SHAP": 0.34606678662036067
+      }
+    ]
+  }
+]
