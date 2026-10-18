@@ -4,6 +4,35 @@ ISOM 835 Predictive Analytics and Machine Learning · **Anshuman** · **[NAMES T
 
 At 11:59 PM, forecast each of the next calendar day's 24 system-wide hourly rental counts. A hypothetical operations manager uses the forecasts to review aggregate service capacity and staffing. This is regression/forecasting of completed rentals, not classification, latent unmet demand, unique bicycles, or individual station demand.
 
+## Run the entire project from one Python file
+
+[**Open in Google Colab**](https://colab.research.google.com/github/agrawalanshuman/ISOM_835_Project/blob/main/Open_in_Colab.ipynb)
+
+The complete implementation is now in [`BikeSharing_Project.py`](BikeSharing_Project.py).
+It includes data loading, features, both fitted models, tuning, intervals, SHAP, business analysis,
+plots, the model card, slides and memo. It imports no project helper modules. The small `src/`
+files forward imports to this file so existing executed milestone notebooks and safety tests
+continue to work. Notebook-generation and artifact-check scripts remain development utilities.
+
+In Colab, open the link and run the cells in order: install dependencies, run the Python file,
+view plots, and optionally download a ZIP. No Git clone, API credentials, or Google Drive mount
+is needed. If packages were already imported, restart the runtime after installation. The
+`.py` file itself is viewed on GitHub; the launcher notebook is what Colab opens interactively.
+Google-hosted execution has not been independently tested here.
+
+Locally, after installing requirements:
+
+```bash
+python BikeSharing_Project.py
+# Or supply your own copy of the original audited source:
+python BikeSharing_Project.py --data-file data/hour.csv --output-dir run_outputs
+```
+
+The script writes to `run_outputs/` by default, preserving the submitted results in `results/`.
+It uses local real data if present; otherwise it downloads the audited dataset from a pinned
+GitHub source or UCI using TLS and verifies SHA-256. It never synthesizes data. Models are
+recomputed from scratch; no hyperparameters or analysis assumptions changed in consolidation.
+
 ## Verified results
 
 Real uploaded UCI data: **17,379 observed hours**, January 1, 2011–December 31, 2012. A full hourly grid exposes **165 missing hours**; no target observations are invented.
@@ -47,7 +76,7 @@ The model assumes recorded hourly counts are finalized before the 11:59 PM issue
 | `Anshuman_dryrun.pdf` | Ten-slide business presentation, for an eight-minute talk |
 | `Anshuman_memo.pdf` | Two-page memo with all five required sections |
 | `model_card.md` | Concise intended-use, evaluation, limitations, monitoring card |
-| `src/forecasting.py` | Readable audited feature/model/evaluation code and 24-hour forecast API |
+| `BikeSharing_Project.py` | Complete standalone analysis and 24-hour forecast API |
 | `src/plots.py`, `src/documents.py` | Real-result figures, SHAP, slides and memo generation |
 | `scripts/download_data.py` | Verified local loading or TLS-verified UCI download, with no synthetic fallback |
 | `scripts/build_notebooks.py` | Notebook source generator (regenerating clears saved outputs) |
