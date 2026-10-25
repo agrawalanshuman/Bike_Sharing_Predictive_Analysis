@@ -1,273 +1,89 @@
 {
   "notebooks": {
-    "Anshuman_milestone2.ipynb": {
-      "executed_code_cells": 6,
-      "embedded_png_outputs": 3,
-      "errors": 0
-    },
-    "Anshuman_milestone3.ipynb": {
+    "analysis.ipynb": {
       "executed_code_cells": 12,
       "embedded_png_outputs": 11,
       "errors": 0
     },
-    "BikeSharing_Final.ipynb": {
+    "coursework/milestone2.ipynb": {
+      "executed_code_cells": 6,
+      "embedded_png_outputs": 3,
+      "errors": 0
+    },
+    "coursework/milestone3.ipynb": {
       "executed_code_cells": 12,
       "embedded_png_outputs": 11,
       "errors": 0
     }
   },
   "pdfs": {
-    "Anshuman_dryrun.pdf": {
+    "reports/presentation.pdf": {
       "pages": 10,
       "page_limit": 10
     },
-    "Anshuman_memo.pdf": {
+    "reports/memo.pdf": {
       "pages": 2,
       "page_limit": 2
     }
   },
   "results": {
     "common_test_hours": 1302,
-    "metrics_recomputed_from_exported_predictions": true,
-    "coverage_recomputed": 0.8563748079877113,
+    "metrics_recomputed_from_predictions": true,
+    "coverage": 0.8563748079877113,
     "best_MAE_model": "ridge"
   },
+  "limitations": [
+    "Google-hosted Colab execution has not been independently verified.",
+    "Nominal 90% temporal prediction intervals under-cover.",
+    "Research prototype; no deployment or course submission is claimed."
+  ],
   "tests": {
     "tests": 13,
     "failures": 0,
     "errors": 0,
     "skipped": 0
   },
-  "limitations": [
-    "Team member placeholders require user edits and review.",
-    "Colab execution is documented but not independently tested.",
-    "Nominal 90% temporal intervals under-cover; no guaranteed future coverage.",
-    "No publication, push, deployment, or Canvas submission has been performed."
+  "python_files": [
+    "bike_sharing.py"
   ],
   "generated_files": [
-    {
-      "file": ".gitignore",
-      "bytes": 482
-    },
-    {
-      "file": "Anshuman_dryrun.pdf",
-      "bytes": 545437
-    },
-    {
-      "file": "Anshuman_memo.pdf",
-      "bytes": 47494
-    },
-    {
-      "file": "Anshuman_milestone2.ipynb",
-      "bytes": 630367
-    },
-    {
-      "file": "Anshuman_milestone3.ipynb",
-      "bytes": 2028488
-    },
-    {
-      "file": "BikeSharing_Final.ipynb",
-      "bytes": 2028488
-    },
-    {
-      "file": "README.md",
-      "bytes": 10466
-    },
-    {
-      "file": "data/PROVENANCE.md",
-      "bytes": 1203
-    },
-    {
-      "file": "data/UCI_Readme.txt",
-      "bytes": 5607
-    },
-    {
-      "file": "data/day.csv",
-      "bytes": 57569
-    },
-    {
-      "file": "data/hour.csv",
-      "bytes": 1156736
-    },
-    {
-      "file": "milestone1_canvas.txt",
-      "bytes": 1071
-    },
-    {
-      "file": "milestone1_discussion_guidance.md",
-      "bytes": 887
-    },
-    {
-      "file": "model_card.md",
-      "bytes": 2244
-    },
-    {
-      "file": "pytest.ini",
-      "bytes": 42
-    },
-    {
-      "file": "references/cheatsheet_source.txt",
-      "bytes": 6035
-    },
-    {
-      "file": "references/course_resources.md",
-      "bytes": 2261
-    },
-    {
-      "file": "references/datasets_source.txt",
-      "bytes": 8342
-    },
-    {
-      "file": "references/project_source.txt",
-      "bytes": 15134
-    },
-    {
-      "file": "references/session-03.json",
-      "bytes": 15527
-    },
-    {
-      "file": "references/session-09.json",
-      "bytes": 19711
-    },
-    {
-      "file": "references/session-11.json",
-      "bytes": 15739
-    },
-    {
-      "file": "references/session11.ipynb",
-      "bytes": 12483
-    },
-    {
-      "file": "requirements-lock.txt",
-      "bytes": 1097
-    },
-    {
-      "file": "requirements.txt",
-      "bytes": 304
-    },
-    {
-      "file": "results/costs.csv",
-      "bytes": 377
-    },
-    {
-      "file": "results/cv_results.csv",
-      "bytes": 2544
-    },
-    {
-      "file": "results/metrics.csv",
-      "bytes": 269
-    },
-    {
-      "file": "results/milestone2_metrics.csv",
-      "bytes": 104
-    },
-    {
-      "file": "results/predictions.csv",
-      "bytes": 128289
-    },
-    {
-      "file": "results/shap_cases.json",
-      "bytes": 21441
-    },
-    {
-      "file": "results/slices.csv",
-      "bytes": 5296
-    },
-    {
-      "file": "results/summary.json",
-      "bytes": 1582
-    },
-    {
-      "file": "results/test_results.xml",
-      "bytes": 1934
-    },
-    {
-      "file": "results/verification.json",
-      "bytes": 5403
-    },
-    {
-      "file": "scripts/build_documents.py",
-      "bytes": 382
-    },
-    {
-      "file": "scripts/build_notebooks.py",
-      "bytes": 16810
-    },
-    {
-      "file": "scripts/download_data.py",
-      "bytes": 1344
-    },
-    {
-      "file": "scripts/execute_notebooks.py",
-      "bytes": 1564
-    },
-    {
-      "file": "scripts/verify_artifacts.py",
-      "bytes": 3611
-    },
-    {
-      "file": "src/__init__.py",
-      "bytes": 37
-    },
-    {
-      "file": "src/documents.py",
-      "bytes": 16224
-    },
-    {
-      "file": "src/forecasting.py",
-      "bytes": 11865
-    },
-    {
-      "file": "src/plots.py",
-      "bytes": 6513
-    },
-    {
-      "file": "tests/test_forecast_safety.py",
-      "bytes": 4030
-    },
-    {
-      "file": "visualizations/actual_vs_predicted.png",
-      "bytes": 201021
-    },
-    {
-      "file": "visualizations/business_costs.png",
-      "bytes": 80498
-    },
-    {
-      "file": "visualizations/eda.png",
-      "bytes": 134516
-    },
-    {
-      "file": "visualizations/intervals.png",
-      "bytes": 224051
-    },
-    {
-      "file": "visualizations/milestone2_residuals.png",
-      "bytes": 117832
-    },
-    {
-      "file": "visualizations/milestone2_week.png",
-      "bytes": 182523
-    },
-    {
-      "file": "visualizations/residuals.png",
-      "bytes": 113559
-    },
-    {
-      "file": "visualizations/shap_high.png",
-      "bytes": 104268
-    },
-    {
-      "file": "visualizations/shap_low.png",
-      "bytes": 100743
-    },
-    {
-      "file": "visualizations/shap_moderate.png",
-      "bytes": 102729
-    },
-    {
-      "file": "visualizations/sliced_errors.png",
-      "bytes": 94224
-    }
+    ".gitattributes",
+    ".gitignore",
+    "README.md",
+    "analysis.ipynb",
+    "bike_sharing.py",
+    "coursework/README.md",
+    "coursework/milestone1_canvas.txt",
+    "coursework/milestone1_discussion_guidance.md",
+    "coursework/milestone2.ipynb",
+    "coursework/milestone3.ipynb",
+    "data/README.md",
+    "data/hour.csv",
+    "open_in_colab.ipynb",
+    "reports/memo.pdf",
+    "reports/model_card.md",
+    "reports/presentation.pdf",
+    "requirements.txt",
+    "results/costs.csv",
+    "results/cv_results.csv",
+    "results/metrics.csv",
+    "results/milestone2_metrics.csv",
+    "results/predictions.csv",
+    "results/safety_tests.json",
+    "results/shap_cases.json",
+    "results/slices.csv",
+    "results/summary.json",
+    "results/verification.json",
+    "visualizations/actual_vs_predicted.png",
+    "visualizations/business_costs.png",
+    "visualizations/eda.png",
+    "visualizations/intervals.png",
+    "visualizations/milestone2_residuals.png",
+    "visualizations/milestone2_week.png",
+    "visualizations/residuals.png",
+    "visualizations/shap_high.png",
+    "visualizations/shap_low.png",
+    "visualizations/shap_moderate.png",
+    "visualizations/sliced_errors.png"
   ]
 }

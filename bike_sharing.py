@@ -1,10 +1,10 @@
-"""Anshuman's complete ISOM 835 workflow in one runnable Python file.
+"""Bike Sharing Predictive Analysis — a personal project by Anshuman.
 
 Install requirements.txt, then run:
-    python BikeSharing_Project.py
+    python bike_sharing.py
 Outputs go to run_outputs/, leaving the submitted results untouched.
 Use --data-file /path/to/hour.csv to supply a local source file.
-See Open_in_Colab.ipynb for a one-click Google Colab launcher.
+See open_in_colab.ipynb for a one-click Google Colab launcher.
 """
 import os
 os.environ.setdefault('OMP_NUM_THREADS', '2')
@@ -41,6 +41,9 @@ EXCLUDED = ['casual', 'registered', 'cnt', 'temp', 'atemp', 'hum', 'windspeed',
 def load_data(path=None):
     """Keep missing target hours as NaN, never interpolate rental observations."""
     path = Path(path or ROOT / 'data/hour.csv')
+    expected = 'e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f'
+    if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
+        raise ValueError('Hourly source checksum differs from the audited UCI dataset')
     raw = pd.read_csv(path)
     ts = pd.to_datetime(raw['dteday']) + pd.to_timedelta(raw['hr'], unit='h')
     if ts.duplicated().any():
@@ -164,7 +167,7 @@ def compute_intervals(model, d):
         'average_width': float(np.mean(upper-lower)), 'calibration_rows': len(d['cal'])}
 
 
-def error_slices(predictions):
+def error_slices(predictions, observed_grid=None):
     rows = []
     idx = predictions.index
     groups = {'hour': pd.Series(idx.hour.astype(str), index=idx),
@@ -172,6 +175,11 @@ def error_slices(predictions):
               'season': pd.Series(np.select([idx.month.isin([12,1,2]), idx.month.isin([3,4,5]),
                     idx.month.isin([6,7,8])], ['winter','spring','summer'], default='autumn'),index=idx),
               'period': pd.Series(np.where(np.isin(idx.hour,[7,8,9,16,17,18]),'commute','other'),index=idx)}
+    if observed_grid is not None:
+        # Post-prediction diagnostic only: actual weather never enters model features.
+        weather = observed_grid.loc[idx, 'weathersit'].map({
+            1: 'clear', 2: 'mist/cloudy', 3: 'light rain/snow', 4: 'severe weather'})
+        groups['observed_weather'] = weather.fillna('unknown')
     for dimension, labels in groups.items():
         for value, ix in labels.groupby(labels).groups.items():
             for name in ['seasonal_naive','ridge','boosting']:
@@ -209,7 +217,7 @@ def run_advanced(d, ridge_pred):
     metrics['MAE_improvement']=metrics.loc['seasonal_naive','MAE']-metrics.MAE
     metrics['MAE_improvement_pct']=100*metrics.MAE_improvement/metrics.loc['seasonal_naive','MAE']
     return {'model':model,'search':search,'cv_boundaries':boundaries,'predictions':predictions,
-            'metrics':metrics,'intervals':intervals,'slices':error_slices(predictions),
+            'metrics':metrics,'intervals':intervals,'slices':error_slices(predictions, d['grid']),
             'costs':cost_analysis(predictions)}
 
 
@@ -359,7 +367,7 @@ def model_card(d,a):
     m=a['metrics']; it=a['intervals']; s=a['slices'].query("model == 'boosting'")
     w=s.loc[s.MAE.idxmax()]
     return f'''# Model card — next-day hourly system-wide rentals
-**Owner:** Anshuman, [NAMES TO FILL IN]; hypothetical operations manager is the decision owner.
+**Owner:** Anshuman; hypothetical operations manager is the decision owner.
 **Intended use:** research prototype for aggregate hourly service-capacity and staffing planning at 11:59 PM for the next 24 hourly slots. Not station allocation or autonomous deployment.
 **Data and target:** UCI Capital Bikeshare 2011–2012, {d['audit']['source_rows']:,} observed hours; target `cnt`, completed rentals. Fit {d['audit']['fit_start']}–{d['audit']['fit_end']} ({len(d['fit']):,} rows); calibration {d['audit']['calibration_start']}–{d['audit']['calibration_end']}; test {d['audit']['test_start']}–{d['audit']['test_end']} ({len(d['test']):,} comparable hours).
 **Methods:** seasonal naive; fixed-alpha Ridge pipeline; HistGradientBoosting pipeline tuned on three training-only chronological folds. Calendar and pre-issuance demand features only; no target components or future observed weather. Daily lags update, model parameters stay frozen.
@@ -372,6 +380,7 @@ def model_card(d,a):
 
 
 def generate_pdfs():
+    (ROOT/'reports').mkdir(exist_ok=True)
     from reportlab.pdfgen import canvas
     from reportlab.pdfbase import pdfmetrics
     from reportlab.pdfbase.ttfonts import TTFont
@@ -394,8 +403,9 @@ def generate_pdfs():
     cases=json.loads((ROOT/'results/shap_cases.json').read_text())
     navy=HexColor('#182e45');teal=HexColor('#127d92');gray=HexColor('#536474')
     W,H=960,540
-    cv=canvas.Canvas(str(ROOT/'Anshuman_dryrun.pdf'),pagesize=(W,H))
-    cv.setTitle('Next-Day Hourly Bike-Sharing Demand — Anshuman')
+    cv=canvas.Canvas(str(ROOT/'reports/presentation.pdf'),pagesize=(W,H))
+    cv.setTitle('Bike Sharing Predictive Analysis — Anshuman')
+    cv.setAuthor('Anshuman')
     def wrap(text,size=19,width=860,color=navy,x=50,y=400):
         import textwrap
         cv.setFillColor(color);cv.setFont('BodyFont',size)
@@ -412,11 +422,11 @@ def generate_pdfs():
     def begin(number,title,kicker):
         cv.setFillColor(white);cv.rect(0,0,W,H,fill=1,stroke=0)
         cv.setFillColor(teal);cv.rect(0,H-12,W,12,fill=1,stroke=0)
-        cv.setFont('BodyBold',12);cv.drawString(50,H-44,'ISOM 835  /  ANSHUMAN')
+        cv.setFont('BodyBold',12);cv.drawString(50,H-44,'BIKE SHARING PREDICTIVE ANALYSIS  /  ANSHUMAN')
         cv.setFillColor(navy);cv.setFont('BodyBold',27);cv.drawString(50,H-91,title)
         wrap(kicker,14,860,gray,y=H-122)
         cv.setFillColor(gray);cv.setFont('BodyFont',10)
-        cv.drawString(50,22,'[NAMES TO FILL IN]  |  Historical classroom prototype; no deployment or verified savings')
+        cv.drawString(50,22,'Anshuman  |  Historical research prototype; no deployment or verified savings')
         cv.drawRightString(W-40,22,f'{number:02d} / 10')
     def bullets(items,y=355,size=21,width=850):
         for item in items:y=wrap('- '+item,size,width,y=y)-20
@@ -470,7 +480,7 @@ def generate_pdfs():
     bullets(['Validate data latency, calendars, service constraints, and cost assumptions with operations.',
         'Monitor weekly error, missing history, peak-hour misses, interval coverage, and drift.',
         'Run a new prospective comparison before deployment; obtain station-level data for allocation.',
-        'Team must review the AI-assisted work and fill in names before submission.'],y=365,size=18)
+        'Validate forecasts prospectively before making operational commitments.'],y=365,size=18)
     cv.showPage();cv.save()
     # Two-page memo, deliberately separated to keep five sections readable.
     styles=getSampleStyleSheet()
@@ -479,8 +489,8 @@ def generate_pdfs():
     styles.add(ParagraphStyle(name='MemoHeading',fontName='BodyBold',fontSize=13,leading=17,spaceBefore=10,spaceAfter=7,textColor=teal))
     story=[]
     def para(text,style='MemoText'):story.append(Paragraph(text,styles[style]))
-    para('Next-day system-wide bike-sharing capacity planning','Title')
-    para('To: Hypothetical Bike-Sharing Operations Manager<br/>From: Anshuman — [NAMES TO FILL IN]<br/>Subject: Historical forecasting evidence and a proposed pilot')
+    para('Bike Sharing Predictive Analysis','Title')
+    para('To: Hypothetical Bike-Sharing Operations Manager<br/>From: Anshuman<br/>Subject: Historical forecasting evidence and a proposed pilot')
     para('Question','MemoHeading')
     para('Can next-day hourly forecasts improve aggregate rental-service capacity planning over repeating last week? At 11:59 PM, the proposed workflow predicts each of the next calendar day\'s 24 hourly rental counts. The decision is a system-wide hourly throughput plan to inform staffing review. This dataset cannot determine how many bicycles to place at a particular station.')
     para('Data and Model','MemoHeading')
@@ -489,16 +499,16 @@ def generate_pdfs():
     para(f'Model fitting ends October 7, 2012; October 8-November 4 is reserved for interval calibration. The final eight complete weeks, November 5-December 30, contain {audit["test_rows"]:,} comparable scored hours. Four missing actuals and 38 missing baseline references are excluded. Baseline MAE is {m.loc["seasonal_naive","MAE"]:.2f} rentals per hour, versus {m.loc["ridge","MAE"]:.2f} for Ridge and {m.loc["boosting","MAE"]:.2f} for tuned boosting. RMSE is {m.loc["seasonal_naive","RMSE"]:.2f}, {m.loc["ridge","RMSE"]:.2f}, and {m.loc["boosting","RMSE"]:.2f}, respectively. Ridge has the lowest error; the more complex model does not win. These are daily rolling-origin feature updates with frozen fitted models, not one forecast made eight weeks in advance. Missing-history exclusions and the autumn/winter test window limit generalization.')
     story.append(PageBreak())
     para('Decision and Money','MemoHeading')
-    para(f'For a transparent classroom scenario, plan hourly capacity as the rounded-up nonnegative forecast. Assume $5 per rental-unit of underplanned capacity and $1 per excess unit. On identical test hours the seasonal baseline incurs ${c.seasonal_naive:,.0f} of proxy cost, versus ${c.boosting:,.0f} for boosting, a ${c.proxy_cost_reduction:,.0f} difference. The sensitivity grid varies shortage costs from $2 to $10 and excess costs from $0.50 to $2, without changing the policy using test results. These are assumed historical proxy costs, not actual operating expenses, causal savings, or an optimized staffing solution. Completed rentals miss people who could not rent a bike; they are an imperfect measure of true demand. Favor Ridge for the next pilot based on accuracy and keep the baseline as a fallback; validate costs and capacity constraints before selecting an operational policy.')
+    para(f'For a transparent hypothetical scenario, plan hourly capacity as the rounded-up nonnegative forecast. Assume $5 per rental-unit of underplanned capacity and $1 per excess unit. On identical test hours the seasonal baseline incurs ${c.seasonal_naive:,.0f} of proxy cost, versus ${c.boosting:,.0f} for boosting, a ${c.proxy_cost_reduction:,.0f} difference. The sensitivity grid varies shortage costs from $2 to $10 and excess costs from $0.50 to $2, without changing the policy using test results. These are assumed historical proxy costs, not actual operating expenses, causal savings, or an optimized staffing solution. Completed rentals miss people who could not rent a bike; they are an imperfect measure of true demand. Favor Ridge for the next pilot based on accuracy and keep the baseline as a fallback; validate costs and capacity constraints before selecting an operational policy.')
     para('Trust Story','MemoHeading')
     high=next(x for x in cases if x['case']=='high')
     para(high['explanation'])
     para(f'Three genuine SHAP waterfalls explain low, moderate, and high forecasts. Chronologically calibrated MAPIE intervals target 90% coverage but achieve only {interval["empirical_coverage"]:.2%}, with average width {interval["average_width"]:.1f} rentals. Serial dependence and changing conditions mean ordinary exchangeability-based guarantees do not apply automatically. The worst boosting slice is {w["dimension"]}={w["slice"]}, with MAE {w.MAE:.1f} and RMSE {w.RMSE:.1f} across {int(w["n"])} hours. Weather changes, special events, missing history, reporting delays, and demand shifts remain important failure modes.')
-    para('Before deployment, test the frozen decision rule prospectively and confirm that counts are available by issuance. Monitor missing hours, weekly MAE and RMSE against the concurrent baseline, commute-hour errors, interval coverage and width, and assumed-cost outcomes. Review sustained coverage below 90% or errors above baseline for two weeks; recalibrate or retrain using chronological data. Obtain station inventory and unmet-demand evidence before making station allocation claims. This project is a research prototype; it has not been deployed or submitted. OpenAI Codex assisted with coding, analysis and drafting; the team must verify and own the work.')
+    para('Before deployment, test the frozen decision rule prospectively and confirm that counts are available by issuance. Monitor missing hours, weekly MAE and RMSE against the concurrent baseline, commute-hour errors, interval coverage and width, and assumed-cost outcomes. Review sustained coverage below 90% or errors above baseline for two weeks; recalibrate or retrain using chronological data. Obtain station inventory and unmet-demand evidence before making station allocation claims. This project is a research prototype; it has not been deployed or submitted. OpenAI Codex assisted with coding, analysis and drafting; Anshuman is responsible for reviewing and explaining the work.')
     para('Source: Fanaee-T &amp; Gama (2013), Event labeling combining ensemble detectors and background knowledge, doi:10.1007/s13748-013-0040-3. UCI Bike Sharing dataset, dataset 275. Full methods, plots, assumptions and checks accompany the executed notebooks.')
-    doc=SimpleDocTemplate(str(ROOT/'Anshuman_memo.pdf'),pagesize=letter,rightMargin=48,leftMargin=48,topMargin=42,bottomMargin=42)
+    doc=SimpleDocTemplate(str(ROOT/'reports/memo.pdf'),title='Bike Sharing Predictive Analysis — Decision Memo',author='Anshuman',pagesize=letter,rightMargin=48,leftMargin=48,topMargin=42,bottomMargin=42)
     def footer(canvas,doc):
-        canvas.setFont('BodyFont',9);canvas.setFillColor(gray);canvas.drawString(48,22,f'Anshuman | ISOM 835 | {doc.page}')
+        canvas.setFont('BodyFont',9);canvas.setFillColor(gray);canvas.drawString(48,22,f'Anshuman | Bike Sharing Predictive Analysis | {doc.page}')
     doc.build(story,onFirstPage=footer,onLaterPages=footer)
 
 # ==================== DATA LOADING AND COMMAND-LINE ENTRY ====================
@@ -517,7 +527,7 @@ def ensure_source_data(data_file=None):
             payload = local.read_bytes()
         else:
             urls = [
-                'https://raw.githubusercontent.com/agrawalanshuman/ISOM_835_Project/6a75d26e7e408164a8672c6d3d30d76a3efbff32/data/hour.csv',
+                'https://raw.githubusercontent.com/agrawalanshuman/Bike_Sharing_Predictive_Analysis/6a75d26e7e408164a8672c6d3d30d76a3efbff32/data/hour.csv',
                 'https://archive.ics.uci.edu/static/public/275/bike+sharing+dataset.zip',
             ]
             errors = []
@@ -544,15 +554,32 @@ def ensure_source_data(data_file=None):
 
 def main(argv=None):
     """Execute the complete, unchanged analysis and regenerate all business outputs."""
+    global ROOT, OUT
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output-dir', type=Path, default=Path(__file__).resolve().parent/'run_outputs')
+    parser.add_argument('--output-dir', type=Path, help='Destination for a run, or project directory for an action')
     parser.add_argument('--data-file', type=Path, help='Optional path to the original hour.csv')
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument('--self-test', action='store_true', help='Run 13 embedded forecast-safety tests')
+    actions.add_argument('--verify', action='store_true', help='Verify saved notebook, report and result artifacts')
+    actions.add_argument('--execute-notebooks', action='store_true', help='Execute the three analysis notebooks')
+    actions.add_argument('--build-documents', action='store_true', help='Build PDFs from retained results')
     args = parser.parse_args(argv)
-    global ROOT, OUT
-    ROOT = args.output_dir.expanduser().resolve()
+    action = args.self_test or args.verify or args.execute_notebooks or args.build_documents
+    if action and args.output_dir:
+        ROOT = args.output_dir.expanduser().resolve()
+        OUT = ROOT/'visualizations'
+    if args.self_test:
+        return run_self_tests()
+    if args.verify:
+        return verify_artifacts()
+    if args.execute_notebooks:
+        return execute_notebooks()
+    if args.build_documents:
+        return generate_pdfs()
+    ROOT = (args.output_dir or Path(__file__).resolve().parent/'run_outputs').expanduser().resolve()
     OUT = ROOT/'visualizations'
-    for folder in [ROOT, OUT, ROOT/'results', ROOT/'data']:
+    for folder in [ROOT, OUT, ROOT/'results', ROOT/'data', ROOT/'reports']:
         folder.mkdir(parents=True, exist_ok=True)
     ensure_source_data(args.data_file)
     d = prepare()
@@ -576,7 +603,7 @@ def main(argv=None):
     for case in cases:
         print(case['explanation'])
     business_plot(a['costs'])
-    (ROOT/'model_card.md').write_text(model_card(d,a))
+    (ROOT/'reports/model_card.md').write_text(model_card(d,a))
     day = d['test'][0].normalize()
     forecast_day(ridge,d['grid'],day,int(d['grid'].loc[day,'holiday'])).to_csv(ROOT/'results/example_24_hour_forecast.csv')
     generate_pdfs()
@@ -584,9 +611,202 @@ def main(argv=None):
     print('\nINTERVALS', json.dumps(a['intervals'],indent=2))
     print('\nCOST SENSITIVITY\n'+a['costs'].to_string(index=False))
     print('\nOutputs saved to:', ROOT)
-    print('AI assistance: OpenAI Codex assisted with code and drafting. Team review required.')
+    print('AI assistance: OpenAI Codex assisted with code and drafting. Author review required.')
     print('No GitHub push, deployment, or course submission is performed by this script.')
     return a
+
+
+
+
+# ==================== EMBEDDED SAFETY CHECKS ====================
+def test_lags_equal_exact_timestamp_observation(d,lag):
+    pd.testing.assert_series_equal(d['X'][f'lag_{lag}'],d['y'].shift(lag),check_names=False)
+    assert ((d['X'].index-pd.Timedelta(hours=lag)) < issue_times(d['X'].index)).all()
+
+def test_rolling_window_has_only_available_observations(d,operation,column):
+    # Independently inspect three complete 168-slot windows, including missing data.
+    for t in pd.to_datetime(['2011-01-10 23:00','2012-10-30 12:00','2012-12-25 00:00']):
+        history=d['y'].loc[t-pd.Timedelta(hours=191):t-pd.Timedelta(hours=24)]
+        assert len(history)==168
+        assert history.index.max()<issue_times(pd.DatetimeIndex([t]))[0]
+        expected=getattr(history,operation)()
+        assert np.isclose(d['X'].loc[t,column],expected,equal_nan=True)
+
+def test_no_target_day_or_future_observation_changes_forecast_features(d):
+    target=pd.Timestamp('2012-11-19')
+    changed=d['grid'].copy()
+    cols=['cnt','casual','registered','temp','atemp','hum','windspeed','weathersit']
+    changed.loc[target:,cols]=999999
+    day=pd.date_range(target,periods=24,freq='h')
+    pd.testing.assert_frame_equal(make_features(changed).loc[day],d['X'].loc[day])
+
+def test_features_exclude_target_components_and_future_weather():
+    forbidden={'casual','registered','cnt','temp','atemp','hum','windspeed','weathersit','instant'}
+    assert not forbidden.intersection(FEATURES)
+
+def test_chronology_and_complete_test_week_bounds(d):
+    assert d['fit'].max()<issue_times(d['cal'][:1])[0]
+    assert d['cal'].max()<issue_times(d['test'][:1])[0]
+    start=pd.Timestamp(d['audit']['test_start']);end=pd.Timestamp(d['audit']['test_end'])
+    assert start.dayofweek==0 and start.hour==0
+    assert end.dayofweek==6 and end.hour==23
+    assert end+pd.Timedelta(hours=1)-start==pd.Timedelta(weeks=8)
+
+def test_missing_targets_never_filled_and_test_rows_comparable(d):
+    assert d['grid']['cnt'].isna().sum()==165
+    assert d['y'].loc[d['test']].notna().all()
+    assert d['X'].loc[d['test'],'lag_168'].notna().all()
+    missing=d['grid'].index.difference(d['raw'].index)
+    assert d['y'].loc[missing].isna().all()
+
+def test_imputer_statistics_from_proper_train_only(d):
+    train=d['X'].loc[d['fit']]; model=build_pipeline('ridge').fit(train,d['y'].loc[d['fit']])
+    imputer=model.named_steps['prep'].named_transformers_['numeric'].named_steps['impute']
+    assert np.allclose(imputer.statistics_,train[NUMERIC].median().to_numpy())
+    old=imputer.statistics_.copy()
+    adversarial=d['X'].loc[d['test']].copy();adversarial[NUMERIC]=1e12
+    model.predict(adversarial)
+    assert np.array_equal(old,imputer.statistics_)
+
+def test_rolling_origin_can_use_only_already_observed_test_days(d):
+    t=pd.Timestamp('2012-12-05 18:00')
+    assert t-pd.Timedelta(hours=24) in d['test']
+    assert t-pd.Timedelta(hours=24)<issue_times(pd.DatetimeIndex([t]))[0]
+
+def test_daily_api_produces_24_forecasts_without_accessing_target_day(d):
+    model=build_pipeline('ridge').fit(d['X'].loc[d['fit']],d['y'].loc[d['fit']])
+    day=d['test'][0].normalize()
+    holiday=int(d['grid'].loc[day,'holiday'])
+    first=forecast_day(model,d['grid'],day,holiday)
+    poisoned=d['grid'].copy();poisoned.loc[day:,:]=999999
+    second=forecast_day(model,poisoned,day,holiday)
+    pd.testing.assert_frame_equal(first,second)
+    assert len(first)==24 and first.forecast.notna().all()
+    expected=np.maximum(0,model.predict(d['X'].loc[first.index]))
+    assert np.allclose(first.forecast,expected)
+
+def run_self_tests():
+    """Run the original 13 checks without requiring a separate Python test file."""
+    import unittest
+    import functools
+    def bind(function, *args):
+        return functools.update_wrapper(functools.partial(function, *args), function)
+    data = prepare()
+    suite = unittest.TestSuite()
+    for lag in (24, 48, 168):
+        suite.addTest(unittest.FunctionTestCase(
+            bind(test_lags_equal_exact_timestamp_observation, data, lag),
+            description=f'Exact timestamp and availability: lag_{lag}'))
+    for operation, column in [('mean','roll_mean_7d'),('max','roll_max_7d'),('count','roll_count_7d')]:
+        suite.addTest(unittest.FunctionTestCase(
+            bind(test_rolling_window_has_only_available_observations,data,operation,column),
+            description=f'Historical rolling window: {column}'))
+    for check in [test_no_target_day_or_future_observation_changes_forecast_features,
+                  test_chronology_and_complete_test_week_bounds,
+                  test_missing_targets_never_filled_and_test_rows_comparable,
+                  test_imputer_statistics_from_proper_train_only,
+                  test_rolling_origin_can_use_only_already_observed_test_days,
+                  test_daily_api_produces_24_forecasts_without_accessing_target_day]:
+        suite.addTest(unittest.FunctionTestCase(bind(check,data),description=check.__name__))
+    suite.addTest(unittest.FunctionTestCase(test_features_exclude_target_components_and_future_weather))
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    report = {'tests':result.testsRun,'failures':len(result.failures),
+              'errors':len(result.errors),'skipped':len(result.skipped)}
+    (ROOT/'results').mkdir(exist_ok=True)
+    (ROOT/'results/safety_tests.json').write_text(json.dumps(report,indent=2))
+    if not result.wasSuccessful():
+        raise SystemExit(1)
+    return report
+
+
+def execute_notebooks():
+    """Execute each presentation of the analysis from the same project root."""
+    import sys
+    import nbformat
+    from nbclient import NotebookClient
+    kernels = ROOT/'.jupyter/kernels/bike-sharing'
+    kernels.mkdir(parents=True,exist_ok=True)
+    (kernels/'kernel.json').write_text(json.dumps({
+        'argv':[sys.executable,'-m','ipykernel_launcher','-f','{connection_file}'],
+        'display_name':'Bike Sharing','language':'python',
+        'env':{'OMP_NUM_THREADS':'2','OPENBLAS_NUM_THREADS':'2','MPLCONFIGDIR':'/tmp/bike-mpl'}}))
+    os.environ['JUPYTER_PATH']=str(ROOT/'.jupyter')
+    os.environ['JUPYTER_RUNTIME_DIR']='/tmp/bike-jupyter-runtime'
+    Path(os.environ['JUPYTER_RUNTIME_DIR']).mkdir(exist_ok=True)
+    for filename in ['coursework/milestone2.ipynb','coursework/milestone3.ipynb','analysis.ipynb']:
+        path=ROOT/filename
+        nb=nbformat.read(path,as_version=4)
+        print('Executing',filename,flush=True)
+        try:
+            NotebookClient(nb,timeout=600,kernel_name='bike-sharing',resources={'metadata':{'path':str(ROOT)}}).execute()
+        finally:
+            nbformat.write(nb,path)
+        cells=[c for c in nb.cells if c.cell_type=='code']
+        assert all(c.execution_count is not None for c in cells)
+        assert not any(o.output_type=='error' for c in cells for o in c.outputs)
+        print('Completed:',filename,len(cells),'code cells',flush=True)
+
+
+def verify_artifacts():
+    """Check results and rubric artifacts without retraining or selecting models."""
+    import nbformat
+    from pypdf import PdfReader
+    report={'notebooks':{},'pdfs':{},'results':{},'limitations':[
+        'Google-hosted Colab execution has not been independently verified.',
+        'Nominal 90% temporal prediction intervals under-cover.',
+        'Research prototype; no deployment or course submission is claimed.']}
+    for name in ['analysis.ipynb','coursework/milestone2.ipynb','coursework/milestone3.ipynb']:
+        nb=nbformat.read(ROOT/name,as_version=4);nbformat.validate(nb)
+        cells=[c for c in nb.cells if c.cell_type=='code']
+        assert cells and all(c.execution_count is not None for c in cells)
+        assert not any(o.output_type=='error' for c in cells for o in c.outputs)
+        images=sum('image/png' in o.get('data',{}) for c in cells for o in c.outputs)
+        assert images>=3
+        report['notebooks'][name]={'executed_code_cells':len(cells),'embedded_png_outputs':images,'errors':0}
+    for name,limit in [('reports/presentation.pdf',10),('reports/memo.pdf',2)]:
+        pdf=PdfReader(ROOT/name)
+        assert 0<len(pdf.pages)<=limit
+        text='\n'.join(page.extract_text() for page in pdf.pages)
+        assert 'Anshuman' in text or 'ANSHUMAN' in text
+        assert '[NAMES TO FILL IN]' not in text
+        report['pdfs'][name]={'pages':len(pdf.pages),'page_limit':limit}
+    p=pd.read_csv(ROOT/'results/predictions.csv',index_col=0,parse_dates=True)
+    m=pd.read_csv(ROOT/'results/metrics.csv',index_col=0)
+    assert len(p)==1302 and not p.isna().any().any()
+    for model in ['seasonal_naive','ridge','boosting']:
+        actual=score(p.actual,p[model])
+        assert np.isclose(actual['MAE'],m.loc[model,'MAE'])
+        assert np.isclose(actual['RMSE'],m.loc[model,'RMSE'])
+    summary=json.loads((ROOT/'results/summary.json').read_text())
+    coverage=((p.actual>=p.lower_90)&(p.actual<=p.upper_90)).mean()
+    assert np.isclose(coverage,summary['intervals']['empirical_coverage'])
+    assert np.isclose((p.upper_90-p.lower_90).mean(),summary['intervals']['average_width'])
+    report['results']={'common_test_hours':len(p),'metrics_recomputed_from_predictions':True,
+                       'coverage':float(coverage),'best_MAE_model':m.MAE.idxmin()}
+    cases=json.loads((ROOT/'results/shap_cases.json').read_text())
+    assert {c['case'] for c in cases}=={'low','moderate','high'}
+    for case in cases:
+        assert np.isclose(case['base_value']+sum(f['SHAP'] for f in case['features']),case['raw_prediction'])
+        assert (ROOT/f"visualizations/shap_{case['case']}.png").stat().st_size>10000
+    slices=pd.read_csv(ROOT/'results/slices.csv')
+    assert 'observed_weather' in set(slices.dimension)
+    _,grid=load_data()
+    expected=error_slices(p,grid)
+    pd.testing.assert_frame_equal(slices,expected,check_dtype=False,rtol=1e-10,atol=1e-10)
+    tests=json.loads((ROOT/'results/safety_tests.json').read_text())
+    assert tests=={'tests':13,'failures':0,'errors':0,'skipped':0}
+    report['tests']=tests
+    assert len((ROOT/'coursework/milestone1_canvas.txt').read_text().strip().split('\n\n'))==1
+    # Local ignored environments are excluded from this repository inventory.
+    excluded={'.venv','.git','.jupyter','.pytest_cache','__pycache__','run_outputs'}
+    files=[p for p in ROOT.rglob('*') if p.is_file() and not excluded.intersection(p.relative_to(ROOT).parts)]
+    pyfiles=[str(p.relative_to(ROOT)) for p in files if p.suffix=='.py']
+    assert pyfiles==['bike_sharing.py'],pyfiles
+    report['python_files']=pyfiles
+    report['generated_files']=[str(p.relative_to(ROOT)) for p in sorted(files)]
+    (ROOT/'results/verification.json').write_text(json.dumps(report,indent=2))
+    print(json.dumps({k:v for k,v in report.items() if k!='generated_files'},indent=2))
+    return report
 
 
 if __name__ == '__main__':
