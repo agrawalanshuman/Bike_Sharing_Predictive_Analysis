@@ -375,6 +375,7 @@ def model_card(d,a):
 **Error slices:** worst boosting slice: {w['dimension']}={w['slice']}, MAE {w.MAE:.2f}, RMSE {w.RMSE:.2f}, n={int(w['n'])}. Test seasons are autumn/winter only; group errors are not individual fairness guarantees.
 **Uncertainty:** MAPIE chronological calibration, nominal 90%, empirical {it['empirical_coverage']:.2%}, mean width {it['average_width']:.2f} rentals. Serial dependence and temporal shift undermine exchangeability guarantees; no conditional or station coverage claim.
 **Known failure modes:** weather changes and exceptional events, trend shifts, commute peaks, missing history, recording delay, rental counts censoring unmet demand; no station inventories. SHAP is descriptive, not causal. Missing baseline hours narrow the scored population.
+**Decision optimization:** Gurobi assigns six four-hour shifts under explicit throughput, wage and budget assumptions. Targets are used only for evaluation on 48 complete days; 144 optimal solves are recorded. This retrospective extension requires prospective validation; Plotly provides interactive daily cost comparisons.
 **Deployment limits and monitoring:** do not deploy directly. Pilot against Ridge and seasonal naive; verify calendar and count latency. Monitor daily missingness, rolling weekly MAE/RMSE, commute errors, interval coverage/width, and proxy costs. Investigate sustained coverage below 90% or MAE above the concurrent baseline across two weeks; review drift and recalibrate/retrain chronologically before reconsidering deployment. Thresholds are proposed monitoring rules, not validated alarms.
 '''
 
@@ -401,6 +402,8 @@ def generate_pdfs():
     costs=pd.read_csv(ROOT/'results/costs.csv');c=costs.query('under_cost == 5 and excess_cost == 1').iloc[0]
     slices=pd.read_csv(ROOT/'results/slices.csv');sl=slices.query("model == 'boosting'");w=sl.loc[sl.MAE.idxmax()]
     cases=json.loads((ROOT/'results/shap_cases.json').read_text())
+    staffing=pd.read_csv(ROOT/'results/staffing_metrics.csv',index_col='method')
+    ops=json.loads((ROOT/'results/staffing_summary.json').read_text())
     navy=HexColor('#182e45');teal=HexColor('#127d92');gray=HexColor('#536474')
     W,H=960,540
     cv=canvas.Canvas(str(ROOT/'reports/presentation.pdf'),pagesize=(W,H))
@@ -462,10 +465,10 @@ def generate_pdfs():
     begin(6,'Where forecasts follow and miss the hourly pattern','First held-out week, selected in advance; gaps are not invented observations.')
     image('actual_vs_predicted',height=310)
     cv.showPage()
-    begin(7,'A transparent capacity-cost scenario','Fixed plan: ceiling of the nonnegative forecast. Assumed $5 shortage / $1 excess per unit.')
-    image('business_costs',y=115,height=255)
-    wrap(f'Baseline ${c.seasonal_naive:,.0f}; boosting ${c.boosting:,.0f}; proxy reduction ${c.proxy_cost_reduction:,.0f}.',16,860,y=96)
-    wrap('Sensitivity varies both assumed costs. No causal savings or optimal staffing claim.',14,860,gray,y=64)
+    begin(7,'From forecasts to shift assignments with Gurobi','Six 4-hour shifts; at most 48 worker-shift assignments/day; all operating quantities are assumptions.')
+    image('staffing_optimization',y=115,height=255)
+    wrap(f"{ops['complete_days']} complete days: seasonal ${staffing.loc['seasonal_naive','total_cost']:,.0f}; Ridge ${staffing.loc['ridge','total_cost']:,.0f}; boosting ${staffing.loc['boosting','total_cost']:,.0f}.",16,860,y=96)
+    wrap('144 certified optimal forecast-based solves; retrospective proxy costs, not realized savings.',14,860,gray,y=64)
     cv.showPage()
     begin(8,'Explanations help; intervals still miss their target','Tree SHAP attributes one prediction; it does not establish causality.')
     image('shap_high',x=40,y=75,width=535,height=300)
@@ -499,7 +502,8 @@ def generate_pdfs():
     para(f'Model fitting ends October 7, 2012; October 8-November 4 is reserved for interval calibration. The final eight complete weeks, November 5-December 30, contain {audit["test_rows"]:,} comparable scored hours. Four missing actuals and 38 missing baseline references are excluded. Baseline MAE is {m.loc["seasonal_naive","MAE"]:.2f} rentals per hour, versus {m.loc["ridge","MAE"]:.2f} for Ridge and {m.loc["boosting","MAE"]:.2f} for tuned boosting. RMSE is {m.loc["seasonal_naive","RMSE"]:.2f}, {m.loc["ridge","RMSE"]:.2f}, and {m.loc["boosting","RMSE"]:.2f}, respectively. Ridge has the lowest error; the more complex model does not win. These are daily rolling-origin feature updates with frozen fitted models, not one forecast made eight weeks in advance. Missing-history exclusions and the autumn/winter test window limit generalization.')
     story.append(PageBreak())
     para('Decision and Money','MemoHeading')
-    para(f'For a transparent hypothetical scenario, plan hourly capacity as the rounded-up nonnegative forecast. Assume $5 per rental-unit of underplanned capacity and $1 per excess unit. On identical test hours the seasonal baseline incurs ${c.seasonal_naive:,.0f} of proxy cost, versus ${c.boosting:,.0f} for boosting, a ${c.proxy_cost_reduction:,.0f} difference. The sensitivity grid varies shortage costs from $2 to $10 and excess costs from $0.50 to $2, without changing the policy using test results. These are assumed historical proxy costs, not actual operating expenses, causal savings, or an optimized staffing solution. Completed rentals miss people who could not rent a bike; they are an imperfect measure of true demand. Favor Ridge for the next pilot based on accuracy and keep the baseline as a fallback; validate costs and capacity constraints before selecting an operational policy.')
+    para(f"The original point-capacity scenario assumes $5 per underplanned rental-unit and $1 per excess unit: baseline ${c.seasonal_naive:,.0f}, boosting ${c.boosting:,.0f} over 1,302 hours. The new Gurobi model instead chooses integer assignments across six four-hour shifts, capped at 20 assignments per shift and 48 per day. It assumes 40 rental-service units per worker-hour and $20 hourly pay, minimizing wages plus forecast shortage/excess penalties. These are hypothetical throughput assignments, not identified employees or station allocations.")
+    para(f"All 144 model-based solves reached certified optimality. On {ops['complete_days']} complete common days (1,152 hours), actual-evaluated proxy costs are seasonal ${staffing.loc['seasonal_naive','total_cost']:,.0f}, Ridge ${staffing.loc['ridge','total_cost']:,.0f}, and boosting ${staffing.loc['boosting','total_cost']:,.0f}; flat staffing costs ${staffing.loc['flat_staffing','total_cost']:,.0f}. Actual targets never enter the solver. Eight partial days are excluded equally. Sensitivity revalues the same plans under nine cost combinations. This extension was designed after forecast scores were known: it is exploratory retrospective analysis, not a fresh holdout or causal savings. Completed rentals omit unmet demand; validate throughput, wages and constraints prospectively.")
     para('Trust Story','MemoHeading')
     high=next(x for x in cases if x['case']=='high')
     para(high['explanation'])
@@ -560,7 +564,7 @@ def main(argv=None):
     parser.add_argument('--output-dir', type=Path, help='Destination for a run, or project directory for an action')
     parser.add_argument('--data-file', type=Path, help='Optional path to the original hour.csv')
     actions = parser.add_mutually_exclusive_group()
-    actions.add_argument('--self-test', action='store_true', help='Run 13 embedded forecast-safety tests')
+    actions.add_argument('--self-test', action='store_true', help='Run 17 embedded forecasting and optimization tests')
     actions.add_argument('--verify', action='store_true', help='Verify saved notebook, report and result artifacts')
     actions.add_argument('--execute-notebooks', action='store_true', help='Execute the three analysis notebooks')
     actions.add_argument('--build-documents', action='store_true', help='Build PDFs from retained results')
@@ -603,6 +607,8 @@ def main(argv=None):
     for case in cases:
         print(case['explanation'])
     business_plot(a['costs'])
+    operations = run_optimization(a['predictions'])
+    print('GUROBI STAFFING COSTS\n'+operations['totals'].to_string())
     (ROOT/'reports/model_card.md').write_text(model_card(d,a))
     day = d['test'][0].normalize()
     forecast_day(ridge,d['grid'],day,int(d['grid'].loc[day,'holiday'])).to_csv(ROOT/'results/example_24_hour_forecast.csv')
@@ -686,7 +692,7 @@ def test_daily_api_produces_24_forecasts_without_accessing_target_day(d):
     assert np.allclose(first.forecast,expected)
 
 def run_self_tests():
-    """Run the original 13 checks without requiring a separate Python test file."""
+    """Run 13 forecasting checks and four optimization checks without requiring a separate Python test file."""
     import unittest
     import functools
     def bind(function, *args):
@@ -709,6 +715,9 @@ def run_self_tests():
                   test_daily_api_produces_24_forecasts_without_accessing_target_day]:
         suite.addTest(unittest.FunctionTestCase(bind(check,data),description=check.__name__))
     suite.addTest(unittest.FunctionTestCase(test_features_exclude_target_components_and_future_weather))
+    for check in [test_optimizer_matches_enumeration,test_optimizer_feasibility_and_objective,
+                  test_optimizer_no_actual_input_and_zero_demand,test_optimizer_rejects_invalid_forecast]:
+        suite.addTest(unittest.FunctionTestCase(check))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     report = {'tests':result.testsRun,'failures':len(result.failures),
               'errors':len(result.errors),'skipped':len(result.skipped)}
@@ -794,8 +803,27 @@ def verify_artifacts():
     expected=error_slices(p,grid)
     pd.testing.assert_frame_equal(slices,expected,check_dtype=False,rtol=1e-10,atol=1e-10)
     tests=json.loads((ROOT/'results/safety_tests.json').read_text())
-    assert tests=={'tests':13,'failures':0,'errors':0,'skipped':0}
+    assert tests=={'tests':17,'failures':0,'errors':0,'skipped':0}
     report['tests']=tests
+    ops=json.loads((ROOT/'results/staffing_summary.json').read_text())
+    daily=pd.read_csv(ROOT/'results/staffing_daily.csv')
+    plans=pd.read_csv(ROOT/'results/staffing_plans.csv')
+    assert ops['complete_days']==48 and ops['evaluated_hours']==1152 and ops['optimal_solves']==144
+    assert daily.query("method != 'flat_staffing'").status.eq('OPTIMAL').all()
+    for row in daily.itertuples():
+        day=p.loc[row.date]
+        assert len(day)==24
+        x=plans[(plans.date==row.date)&(plans.method==row.method)].sort_values('start_hour').assignments.to_numpy()
+        assert len(x)==6 and (x>=0).all() and (x<=20).all() and x.sum()<=48
+        assert np.isclose(staffing_cost(day.actual,x)['total_cost'],row.total_cost)
+        if row.method!='flat_staffing':
+            assert np.isclose(staffing_cost(day[row.method],x)['total_cost'],row.objective)
+            assert np.isclose(row.objective,row.bound) and row.mip_gap==0
+    expected_totals=daily.groupby('method')[['wages','shortage_units','excess_units','total_cost']].sum()
+    pd.testing.assert_frame_equal(pd.read_csv(ROOT/'results/staffing_metrics.csv',index_col=0),expected_totals)
+    assert (ROOT/'visualizations/staffing_interactive.html').stat().st_size>10000
+    report['optimization']={'complete_days':48,'certified_optimal_solves':144,'costs_recomputed':True}
+
     assert len((ROOT/'coursework/milestone1_canvas.txt').read_text().strip().split('\n\n'))==1
     # Local ignored environments are excluded from this repository inventory.
     excluded={'.venv','.git','.jupyter','.pytest_cache','__pycache__','run_outputs'}
@@ -807,6 +835,150 @@ def verify_artifacts():
     (ROOT/'results/verification.json').write_text(json.dumps(report,indent=2))
     print(json.dumps({k:v for k,v in report.items() if k!='generated_files'},indent=2))
     return report
+
+
+# ==================== GUROBI OPERATIONS PLANNING ====================
+STAFFING = {'throughput':40., 'hourly_wage':20., 'under_cost':5., 'excess_cost':1.,
+            'max_per_shift':20, 'assignment_budget':48, 'shift_hours':4}
+
+
+def staffing_cost(actual, workers, assumptions=None):
+    """Evaluate a frozen plan; actuals never enter optimization."""
+    p=dict(STAFFING if assumptions is None else assumptions)
+    capacity=np.repeat(np.asarray(workers)*p['throughput'],p['shift_hours'])
+    actual=np.asarray(actual,dtype=float)
+    return {'wages':float(np.sum(workers)*p['shift_hours']*p['hourly_wage']),
+            'shortage_units':float(np.maximum(actual-capacity,0).sum()),
+            'excess_units':float(np.maximum(capacity-actual,0).sum()),
+            'total_cost':float(np.sum(workers)*p['shift_hours']*p['hourly_wage']+
+                p['under_cost']*np.maximum(actual-capacity,0).sum()+
+                p['excess_cost']*np.maximum(capacity-actual,0).sum())}
+
+
+def optimize_staffing(forecast, assumptions=None):
+    """Six integer 4-hour shift assignments; only 24 issued forecasts are inputs."""
+    import gurobipy as gp
+    p=dict(STAFFING if assumptions is None else assumptions)
+    f=np.asarray(forecast,dtype=float)
+    if f.shape!=(24,) or not np.isfinite(f).all() or (f<0).any():
+        raise ValueError('Supply 24 finite nonnegative hourly forecasts')
+    if p['shift_hours']!=4 or any(v<=0 for v in p.values()):
+        raise ValueError('Use positive assumptions and four-hour shifts')
+    try:
+        with gp.Env(empty=True) as env:
+            env.setParam('OutputFlag',0);env.start()
+            with gp.Model('next_day_capacity',env=env) as model:
+                model.Params.Seed=835;model.Params.Threads=2;model.Params.MIPGap=0
+                model.Params.TimeLimit=30
+                x=model.addVars(6,vtype=gp.GRB.INTEGER,lb=0,ub=p['max_per_shift'],name='assignments')
+                short=model.addVars(24,lb=0,name='shortage')
+                excess=model.addVars(24,lb=0,name='excess')
+                model.addConstr(gp.quicksum(x.values())<=p['assignment_budget'])
+                for h in range(24):
+                    model.addConstr(p['throughput']*x[h//4]+short[h]-excess[h]==f[h])
+                model.setObjective(p['hourly_wage']*4*gp.quicksum(x.values())+
+                    p['under_cost']*gp.quicksum(short.values())+
+                    p['excess_cost']*gp.quicksum(excess.values()),gp.GRB.MINIMIZE)
+                model.optimize()
+                if model.Status!=gp.GRB.OPTIMAL:
+                    raise RuntimeError(f'Gurobi did not certify optimality: status {model.Status}')
+                workers=np.array([round(x[s].X) for s in range(6)],dtype=int)
+                return workers,{'status':'OPTIMAL','objective':float(model.ObjVal),
+                                'bound':float(model.ObjBound),'mip_gap':float(model.MIPGap),
+                                'variables':model.NumVars,'constraints':model.NumConstrs}
+    except gp.GurobiError as error:
+        raise RuntimeError('Gurobi needs a usable license. Install gurobipy and use its available '
+                           'restricted license for this small model, or configure your own license securely. '
+                           'No alternative solver or invented solution was used.') from error
+
+
+def run_optimization(predictions):
+    """Retrospective extension on complete common days, with fixed assumptions."""
+    import gurobipy as gp
+    from plotly import graph_objects as go
+    daily=[];hourly=[];plans=[]
+    for date,frame in predictions.groupby(predictions.index.normalize()):
+        if len(frame)!=24 or list(frame.index.hour)!=list(range(24)):
+            continue
+        for method in ['flat_staffing','seasonal_naive','ridge','boosting']:
+            if method=='flat_staffing':
+                workers=np.full(6,8);certificate={'status':'FIXED','objective':None,'bound':None,'mip_gap':None,'variables':0,'constraints':0}
+            else:
+                workers,certificate=optimize_staffing(frame[method].to_numpy())
+            evaluated=staffing_cost(frame.actual,workers)
+            daily.append({'date':str(date.date()),'method':method,'assignments':int(workers.sum()),
+                          **evaluated,**certificate})
+            for shift,count in enumerate(workers):
+                plans.append({'date':str(date.date()),'method':method,'start_hour':4*shift,'assignments':int(count)})
+            for h,t in enumerate(frame.index):
+                hourly.append({'timestamp':str(t),'method':method,'actual':float(frame.actual.iloc[h]),
+                               'capacity':float(workers[h//4]*STAFFING['throughput'])})
+    daily=pd.DataFrame(daily);hourly=pd.DataFrame(hourly);plans=pd.DataFrame(plans)
+    if daily.empty:raise ValueError('No complete common days available for staffing evaluation')
+    totals=daily.groupby('method')[['wages','shortage_units','excess_units','total_cost']].sum()
+    sensitivity=[]
+    for under in [2.,5.,10.]:
+        for over in [.5,1.,2.]:
+            for method,row in totals.iterrows():
+                sensitivity.append({'under_cost':under,'excess_cost':over,'method':method,
+                    'fixed_plan_cost':row.wages+under*row.shortage_units+over*row.excess_units})
+    sensitivity=pd.DataFrame(sensitivity)
+    out=ROOT/'results';out.mkdir(exist_ok=True)
+    for name,frame in [('staffing_daily',daily),('staffing_hourly',hourly),('staffing_plans',plans),('staffing_sensitivity',sensitivity)]:
+        frame.to_csv(out/f'{name}.csv',index=False)
+    totals.to_csv(out/'staffing_metrics.csv')
+    summary={'assumptions':STAFFING,'complete_days':int(daily.date.nunique()),
+        'evaluated_hours':int(daily.date.nunique()*24),'excluded_partial_days':int(predictions.index.normalize().nunique()-daily.date.nunique()),
+        'optimal_solves':int((daily.status=='OPTIMAL').sum()),'gurobi_version':'.'.join(map(str,gp.gurobi.version())),
+        'interpretation':'Exploratory retrospective scenario; assumptions were added after forecast test results were known. Not a fresh holdout, causal savings, individual roster or station allocation.'}
+    (out/'staffing_summary.json').write_text(json.dumps(summary,indent=2))
+    fig,axs=plt.subplots(1,2,figsize=(12,4))
+    totals.total_cost.plot.bar(ax=axs[0],color='#127d92',rot=15)
+    axs[0].set(title='Hypothetical staffing cost',ylabel='USD across complete common days')
+    first=hourly[hourly.timestamp.str.startswith(daily.date.iloc[0])]
+    for method,rows in first.groupby('method'):
+        axs[1].step(range(24),rows.capacity,label=method,where='post')
+    axs[1].plot(range(24),first[first.method=='ridge'].actual,color='black',label='observed rentals')
+    axs[1].set(title='First eligible day: planned throughput',xlabel='Hour',ylabel='Rental-service units/hour');axs[1].legend(fontsize=7)
+    finish(fig,'staffing_optimization')
+    interactive=go.Figure()
+    for method,rows in daily.groupby('method'):
+        interactive.add_trace(go.Scatter(x=rows.date,y=rows.total_cost,name=method,mode='lines+markers'))
+    interactive.update_layout(title='Anshuman | Forecast-to-staffing scenarios',xaxis_title='Historical target day',
+                              yaxis_title='Hypothetical daily cost (USD)',template='plotly_white')
+    interactive.write_html(str(OUT/'staffing_interactive.html'),include_plotlyjs=True)
+    return {'summary':summary,'daily':daily,'totals':totals,'sensitivity':sensitivity}
+
+
+def test_optimizer_matches_enumeration():
+    import itertools
+    p={**STAFFING,'max_per_shift':2,'assignment_budget':3}
+    f=np.repeat([5,90,50,0,80,20],4)
+    workers,certificate=optimize_staffing(f,p)
+    best=min(staffing_cost(f,x,p)['total_cost'] for x in itertools.product(range(3),repeat=6) if sum(x)<=3)
+    assert np.isclose(certificate['objective'],best)
+    assert np.isclose(staffing_cost(f,workers,p)['total_cost'],best)
+
+
+def test_optimizer_feasibility_and_objective():
+    f=np.arange(24)*40.
+    x,c=optimize_staffing(f)
+    assert np.equal(x,np.floor(x)).all() and (x>=0).all() and (x<=20).all() and x.sum()<=48
+    assert np.isclose(c['objective'],staffing_cost(f,x)['total_cost']) and c['mip_gap']==0
+
+
+def test_optimizer_no_actual_input_and_zero_demand():
+    import inspect
+    assert list(inspect.signature(optimize_staffing).parameters)==['forecast','assumptions']
+    x,c=optimize_staffing(np.zeros(24))
+    assert x.sum()==0 and c['objective']==0
+
+
+def test_optimizer_rejects_invalid_forecast():
+    for bad in [np.zeros(23),np.full(24,np.nan),np.full(24,-1.)]:
+        try:optimize_staffing(bad)
+        except ValueError:continue
+        raise AssertionError('Invalid forecast accepted')
 
 
 if __name__ == '__main__':

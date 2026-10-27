@@ -1,0 +1,5 @@
+method,wages,shortage_units,excess_units,total_cost
+boosting,167600.0,15816.0,133782.0,380462.0
+flat_staffing,184320.0,35208.0,186614.0,546974.0
+ridge,154160.0,21271.0,112357.0,372872.0
+seasonal_naive,155280.0,25480.0,118806.0,401486.0

@@ -59,3 +59,6 @@ typing_extensions==4.16.0
 tzdata==2026.5
 wcwidth==0.9.2
 pypdf==6.21.2
+gurobipy==13.0.3
+plotly==7.1.0
+narwhals==2.27.1

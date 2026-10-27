@@ -44,15 +44,61 @@ Features are derived calendar information, exact 24/48/168-hour demand lags, and
 
 The target components `casual` and `registered` are excluded. Actual target-hour weather is also excluded because no historical weather-forecast archive is available. Observed weather is used only to describe errors after forecasts have been made. Forecast parameters remain frozen through testing; past test-day counts may update tomorrow's features only after those counts have been observed. This is daily rolling-origin evaluation.
 
+## Forecasts to decisions: Gurobi optimization
+
+The project now uses **gurobipy 13.0.3** to select integer staffing assignments and **Plotly 7.1.0**
+to explore daily planning costs interactively. Existing forecasting models and their metrics are retained.
+
+For each next day, six nonoverlapping four-hour shifts start at 00:00, 04:00, 08:00, 12:00, 16:00
+and 20:00. Gurobi chooses 0–20 assignments per shift with at most 48 assignments per day
+(192 worker-hours). These are worker-shift assignments, not a count of unique employees.
+Assume 40 rental-service units per worker-hour, USD 20 hourly wages, USD 5 per shortage-unit and
+USD 1 per excess unit. The objective minimizes wages plus forecast shortage/excess penalties.
+Only forecasts and these fixed assumptions enter the solver; actuals evaluate the resulting plan afterward.
+This is aggregate throughput planning, not station allocation or a labor-compliant individual roster.
+
+| Planning method | Actual-evaluated hypothetical cost |
+|---|---:|
+| Fixed eight assignments per shift | $546,974 |
+| Gurobi + seasonal-naive forecast | $401,486 |
+| Gurobi + Ridge forecast | **$372,872** |
+| Gurobi + boosting forecast | $380,462 |
+
+All **144 solves** attained certified optimality. The comparison uses **48 complete common days /
+1,152 hours**; eight partial days are excluded equally. Each model has 54 variables (six integer)
+and 25 constraints. Status, objective, bound, assignments and evaluated costs are exported in `results/staffing_*`.
+The nine-scenario sensitivity table revalues the same frozen plans under different assumed penalties;
+it does not optimize against test actuals. These costs include wages and use a different sample from
+the original point-capacity analysis, so the two cost totals should not be compared directly.
+
+This extension was designed after the forecast test scores were known. It is exploratory retrospective
+analysis, not an untouched policy holdout or evidence of causal savings. Throughput, wages, budgets,
+shift lengths and labor constraints must be validated with an operator before any deployment.
+The original forecast metrics remain unchanged.
+
+![Gurobi shift planning and hypothetical costs](visualizations/staffing_optimization.png)
+
+Download and open [`staffing_interactive.html`](visualizations/staffing_interactive.html) in a browser
+for the Plotly report (GitHub displays the file rather than running it). JavaScript is included for offline use.
+
+### Gurobi licensing
+
+`requirements.txt` installs gurobipy and Plotly. A usable Gurobi license is required in the execution
+environment. The available local license successfully solved these small models; Google-hosted Colab
+licensing has not been independently tested. If Gurobi reports a license error, configure an appropriate
+license using Gurobi's official instructions: https://support.gurobi.com/.
+Keep any credentials outside the repository and notebooks. The workflow raises an explicit error if
+licensing fails or optimality is not certified; it does not silently replace Gurobi or fabricate results.
+
 ## One Python file
 
-[`bike_sharing.py`](bike_sharing.py) contains the entire implementation: source loading, feature generation, preprocessing pipelines, model tuning, scoring, MAPIE intervals, three SHAP waterfalls, sliced errors, capacity-cost sensitivity, figures, PDFs, notebook execution and validation checks. There are no additional project Python modules.
+[`bike_sharing.py`](bike_sharing.py) contains the entire implementation: source loading, feature generation, preprocessing pipelines, model tuning, scoring, MAPIE intervals, three SHAP waterfalls, sliced errors, capacity-cost sensitivity, figures, PDFs, Gurobi shift optimization, Plotly interactive reporting, notebook execution and validation checks. There are no additional project Python modules.
 
 The executed [`analysis.ipynb`](analysis.ipynb) tells the full analytical story. The two notebooks under [`coursework/`](coursework/) retain the staged baseline and advanced-model deliverables. They call the same implementation to keep the methods consistent.
 
 ## Run the project
 
-The project is tested with **Python 3.12** on CPU. Pinned direct and transitive dependencies are listed in [`requirements.txt`](requirements.txt). No API keys or external services are required.
+The project is tested with **Python 3.12** on CPU. Pinned direct and transitive dependencies are listed in [`requirements.txt`](requirements.txt). No data API keys are required; Gurobi needs an available license, as described above.
 
 ```bash
 python -m venv .venv
@@ -78,7 +124,7 @@ python bike_sharing.py --build-documents --output-dir .
 python bike_sharing.py --verify
 ```
 
-The 13 safety checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Artifact checks validate notebook outputs and consistency of exported results. PDF page limits are checked with the pinned `pypdf` dependency.
+The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. PDF page limits are checked with the pinned `pypdf` dependency.
 
 ### Google Colab
 

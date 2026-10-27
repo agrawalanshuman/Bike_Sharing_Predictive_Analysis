@@ -34,7 +34,7 @@ The course project page lists Milestones 1–3 at 11:59 PM, dry-run slides at 5 
 | Model card | [`reports/model_card.md`](../reports/model_card.md): owner, intended use, data, metrics, weak slices, uncertainty, failure modes, operating limits and monitoring |
 | Business value | Fixed aggregate-capacity planning rule, explicit asymmetric cost assumptions, nine-scenario sensitivity table, and limits on causal savings and unmet-demand interpretation |
 | Business communication | Executive narrative in the ten-slide presentation; five required sections in the two-page memo; a reproducible public README |
-| Reproducibility and safety | One Python file, pinned dependencies, visible notebook outputs, source checksum, 13 forecast-safety checks and artifact verification |
+| Reproducibility and safety | One Python file, pinned dependencies, visible notebook outputs, source checksum, 17 forecasting and optimization checks and artifact verification |
 | Academic honesty | Anshuman credited as author; AI assistance disclosed; source data and learning references cited; no invented scores, participation or deployment claims |
 
 The Ridge model has the lowest held-out MAE. The advanced model is reported honestly even though it trails Ridge. Nominal 90% intervals attain 85.64% coverage, and this shortfall is part of the evaluation rather than hidden or retuned away.
@@ -56,3 +56,12 @@ The project was informed by the publicly available ISOM 835 learning materials:
 - [Public course-source repository](https://github.com/harslan/isom-835), inspected at commit `a3dd676287524f6fbcf7c7db43a7f31c54dd1047` when the course website was unavailable from the development environment.
 
 The implementation adapts the concepts to a stricter forecast-time contract: it avoids the lesson example's synthetic fallback, target interpolation, future observed weather inputs and overlapping split boundary. These differences are documented in the analysis. OpenAI Codex assisted with code, checks, analysis presentation and drafting. Anshuman must verify and understand the work; attribution does not transfer that responsibility.
+
+## Additional operations-research extension
+
+The integrated analysis and Milestone 3 now include a Gurobi mixed-integer shift-assignment model,
+complete-day comparisons, solver certificates and fixed-policy cost sensitivity. Plotly adds an
+interactive daily-cost report. This extends the business-decision evidence while retaining the
+required regression models, training-only tuning, SHAP cases and MAPIE intervals. The new policy
+analysis is explicitly retrospective; operating assumptions and licensing requirements are documented
+in the main README. All implementation and 17 checks remain in `bike_sharing.py`.

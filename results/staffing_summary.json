@@ -1,0 +1,17 @@
+{
+  "assumptions": {
+    "throughput": 40.0,
+    "hourly_wage": 20.0,
+    "under_cost": 5.0,
+    "excess_cost": 1.0,
+    "max_per_shift": 20,
+    "assignment_budget": 48,
+    "shift_hours": 4
+  },
+  "complete_days": 48,
+  "evaluated_hours": 1152,
+  "excluded_partial_days": 8,
+  "optimal_solves": 144,
+  "gurobi_version": "13.0.3",
+  "interpretation": "Exploratory retrospective scenario; assumptions were added after forecast test results were known. Not a fresh holdout, causal savings, individual roster or station allocation."
+}

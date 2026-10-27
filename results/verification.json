@@ -1,8 +1,8 @@
 {
   "notebooks": {
     "analysis.ipynb": {
-      "executed_code_cells": 12,
-      "embedded_png_outputs": 11,
+      "executed_code_cells": 13,
+      "embedded_png_outputs": 12,
       "errors": 0
     },
     "coursework/milestone2.ipynb": {
@@ -11,8 +11,8 @@
       "errors": 0
     },
     "coursework/milestone3.ipynb": {
-      "executed_code_cells": 12,
-      "embedded_png_outputs": 11,
+      "executed_code_cells": 13,
+      "embedded_png_outputs": 12,
       "errors": 0
     }
   },
@@ -38,10 +38,15 @@
     "Research prototype; no deployment or course submission is claimed."
   ],
   "tests": {
-    "tests": 13,
+    "tests": 17,
     "failures": 0,
     "errors": 0,
     "skipped": 0
+  },
+  "optimization": {
+    "complete_days": 48,
+    "certified_optimal_solves": 144,
+    "costs_recomputed": true
   },
   "python_files": [
     "bike_sharing.py"
@@ -72,6 +77,12 @@
     "results/safety_tests.json",
     "results/shap_cases.json",
     "results/slices.csv",
+    "results/staffing_daily.csv",
+    "results/staffing_hourly.csv",
+    "results/staffing_metrics.csv",
+    "results/staffing_plans.csv",
+    "results/staffing_sensitivity.csv",
+    "results/staffing_summary.json",
     "results/summary.json",
     "results/verification.json",
     "visualizations/actual_vs_predicted.png",
@@ -84,6 +95,8 @@
     "visualizations/shap_high.png",
     "visualizations/shap_low.png",
     "visualizations/shap_moderate.png",
-    "visualizations/sliced_errors.png"
+    "visualizations/sliced_errors.png",
+    "visualizations/staffing_interactive.html",
+    "visualizations/staffing_optimization.png"
   ]
 }
