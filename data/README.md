@@ -1,6 +1,6 @@
 # Bike Sharing Predictive Analysis — source data
 
-`hour.csv` is the original UCI Bike Sharing hourly dataset supplied for this project. It contains **17,379 observed hourly Capital Bikeshare records** from January 1, 2011 through December 31, 2012. The unmodified file has 17 columns. The original daily aggregate is unnecessary for this hourly workflow and is not included.
+`hour.csv` is the original UCI Bike Sharing hourly dataset used in this project. It contains **17,379 observed hourly Capital Bikeshare records** from January 1, 2011 through December 31, 2012. The unmodified file has 17 columns. The original daily aggregate is unnecessary for this hourly workflow and is not included.
 
 - Dataset: https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset
 - Original archive: https://archive.ics.uci.edu/static/public/275/bike+sharing+dataset.zip
@@ -14,4 +14,4 @@ A complete hourly index contains 17,544 slots, exposing 165 missing observations
 
 Citation: Fanaee-T, Hadi, and João Gama (2013), “Event labeling combining ensemble detectors and background knowledge,” *Progress in Artificial Intelligence*. DOI: https://doi.org/10.1007/s13748-013-0040-3.
 
-The dataset is external research material credited to its original authors. This repository does not assign a new license to the source data. Removing copied teaching materials does not remove the obligation to cite the data used in the analysis.
+The dataset is external research material credited to its original authors. This repository does not assign a new license to the source data. Please retain this attribution when reusing the dataset.

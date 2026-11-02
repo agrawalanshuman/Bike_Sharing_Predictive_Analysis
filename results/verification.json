@@ -4,16 +4,6 @@
       "executed_code_cells": 13,
       "embedded_png_outputs": 12,
       "errors": 0
-    },
-    "coursework/milestone2.ipynb": {
-      "executed_code_cells": 6,
-      "embedded_png_outputs": 3,
-      "errors": 0
-    },
-    "coursework/milestone3.ipynb": {
-      "executed_code_cells": 13,
-      "embedded_png_outputs": 12,
-      "errors": 0
     }
   },
   "pdfs": {
@@ -35,7 +25,7 @@
   "limitations": [
     "Google-hosted Colab execution has not been independently verified.",
     "Nominal 90% temporal prediction intervals under-cover.",
-    "Research prototype; no deployment or course submission is claimed."
+    "Personal research prototype; not deployed in production."
   ],
   "tests": {
     "tests": 17,
@@ -57,22 +47,16 @@
     "README.md",
     "analysis.ipynb",
     "bike_sharing.py",
-    "coursework/README.md",
-    "coursework/milestone1_canvas.txt",
-    "coursework/milestone1_discussion_guidance.md",
-    "coursework/milestone2.ipynb",
-    "coursework/milestone3.ipynb",
     "data/README.md",
     "data/hour.csv",
-    "open_in_colab.ipynb",
     "reports/memo.pdf",
     "reports/model_card.md",
     "reports/presentation.pdf",
     "requirements.txt",
+    "results/baseline_metrics.csv",
     "results/costs.csv",
     "results/cv_results.csv",
     "results/metrics.csv",
-    "results/milestone2_metrics.csv",
     "results/predictions.csv",
     "results/safety_tests.json",
     "results/shap_cases.json",
@@ -86,11 +70,11 @@
     "results/summary.json",
     "results/verification.json",
     "visualizations/actual_vs_predicted.png",
+    "visualizations/baseline_residuals.png",
+    "visualizations/baseline_week.png",
     "visualizations/business_costs.png",
     "visualizations/eda.png",
     "visualizations/intervals.png",
-    "visualizations/milestone2_residuals.png",
-    "visualizations/milestone2_week.png",
     "visualizations/residuals.png",
     "visualizations/shap_high.png",
     "visualizations/shap_low.png",

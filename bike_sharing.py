@@ -2,9 +2,9 @@
 
 Install requirements.txt, then run:
     python bike_sharing.py
-Outputs go to run_outputs/, leaving the submitted results untouched.
+Outputs go to run_outputs/, leaving the saved portfolio results untouched.
 Use --data-file /path/to/hour.csv to supply a local source file.
-See open_in_colab.ipynb for a one-click Google Colab launcher.
+Open analysis.ipynb in Google Colab or follow the README to run this file.
 """
 import os
 os.environ.setdefault('OMP_NUM_THREADS', '2')
@@ -291,14 +291,14 @@ def evaluation_plots(p,slices=None):
     for n,color in [('actual','#182e45'),('seasonal_naive','#d68b25'),('ridge','#8c6bb1'),('boosting','#127d92')]:
         if n in week:ax.plot(week.index,week[n],label=n,color=color,lw=1.2)
     ax.set(title='First held-out week: same observed hours',ylabel='Rentals per hour',xlabel='Target time')
-    ax.legend(ncol=4);finish(fig,'actual_vs_predicted' if 'boosting' in p else 'milestone2_week')
+    ax.legend(ncol=4);finish(fig,'actual_vs_predicted' if 'boosting' in p else 'baseline_week')
     fig,axs=plt.subplots(1,2,figsize=(11,4))
     name='boosting' if 'boosting' in p else 'ridge'
     res=p.actual-p[name]
     axs[0].scatter(p[name],res,alpha=.35,s=9);axs[0].axhline(0,color='black',lw=1)
     axs[0].set(xlabel='Forecast rentals',ylabel='Actual - forecast',title=f'{name}: residual pattern')
     axs[1].hist(res,bins=45,color='#127d92');axs[1].set(xlabel='Residual rentals',ylabel='Hours',title='Held-out residual distribution')
-    finish(fig,'residuals' if name=='boosting' else 'milestone2_residuals')
+    finish(fig,'residuals' if name=='boosting' else 'baseline_residuals')
     if 'lower_90' in p:
         fig,ax=plt.subplots(figsize=(12,4))
         ax.fill_between(week.index,week.lower_90,week.upper_90,alpha=.25,color='#127d92',label='90% nominal interval')
@@ -448,7 +448,7 @@ def generate_pdfs():
     begin(3,'Real trips, with real limitations','Source: UCI Bike Sharing, Capital Bikeshare, Washington DC, 2011-2012.')
     bullets([f'{audit["source_rows"]:,} observed hours; {audit["missing_hours"]} missing slots stay missing.',
         'Counts measure completed rentals, not unserved customers or station inventories.',
-        'Weather observations are excluded; no archived forecasts were supplied.'])
+        'Weather observations are excluded; no archived forecasts are available in the source dataset.'])
     cv.showPage()
     begin(4,'The forecast cannot see tomorrow','Availability checks and a chronological holdout protect the evaluation.')
     bullets(['Calendar plus lags 24 / 48 / 168 hours; rolling windows end 24 hours before each target.',
@@ -502,14 +502,14 @@ def generate_pdfs():
     para(f'Model fitting ends October 7, 2012; October 8-November 4 is reserved for interval calibration. The final eight complete weeks, November 5-December 30, contain {audit["test_rows"]:,} comparable scored hours. Four missing actuals and 38 missing baseline references are excluded. Baseline MAE is {m.loc["seasonal_naive","MAE"]:.2f} rentals per hour, versus {m.loc["ridge","MAE"]:.2f} for Ridge and {m.loc["boosting","MAE"]:.2f} for tuned boosting. RMSE is {m.loc["seasonal_naive","RMSE"]:.2f}, {m.loc["ridge","RMSE"]:.2f}, and {m.loc["boosting","RMSE"]:.2f}, respectively. Ridge has the lowest error; the more complex model does not win. These are daily rolling-origin feature updates with frozen fitted models, not one forecast made eight weeks in advance. Missing-history exclusions and the autumn/winter test window limit generalization.')
     story.append(PageBreak())
     para('Decision and Money','MemoHeading')
-    para(f"The original point-capacity scenario assumes $5 per underplanned rental-unit and $1 per excess unit: baseline ${c.seasonal_naive:,.0f}, boosting ${c.boosting:,.0f} over 1,302 hours. The new Gurobi model instead chooses integer assignments across six four-hour shifts, capped at 20 assignments per shift and 48 per day. It assumes 40 rental-service units per worker-hour and $20 hourly pay, minimizing wages plus forecast shortage/excess penalties. These are hypothetical throughput assignments, not identified employees or station allocations.")
+    para(f"The original point-capacity scenario assumes $5 per underplanned rental-unit and $1 per excess unit: baseline ${c.seasonal_naive:,.0f}, boosting ${c.boosting:,.0f} over 1,302 hours. The Gurobi model instead chooses integer assignments across six four-hour shifts, capped at 20 assignments per shift and 48 per day. It assumes 40 rental-service units per worker-hour and $20 hourly pay, minimizing wages plus forecast shortage/excess penalties. These are hypothetical throughput assignments, not identified employees or station allocations.")
     para(f"All 144 model-based solves reached certified optimality. On {ops['complete_days']} complete common days (1,152 hours), actual-evaluated proxy costs are seasonal ${staffing.loc['seasonal_naive','total_cost']:,.0f}, Ridge ${staffing.loc['ridge','total_cost']:,.0f}, and boosting ${staffing.loc['boosting','total_cost']:,.0f}; flat staffing costs ${staffing.loc['flat_staffing','total_cost']:,.0f}. Actual targets never enter the solver. Eight partial days are excluded equally. Sensitivity revalues the same plans under nine cost combinations. This extension was designed after forecast scores were known: it is exploratory retrospective analysis, not a fresh holdout or causal savings. Completed rentals omit unmet demand; validate throughput, wages and constraints prospectively.")
     para('Trust Story','MemoHeading')
     high=next(x for x in cases if x['case']=='high')
     para(high['explanation'])
     para(f'Three genuine SHAP waterfalls explain low, moderate, and high forecasts. Chronologically calibrated MAPIE intervals target 90% coverage but achieve only {interval["empirical_coverage"]:.2%}, with average width {interval["average_width"]:.1f} rentals. Serial dependence and changing conditions mean ordinary exchangeability-based guarantees do not apply automatically. The worst boosting slice is {w["dimension"]}={w["slice"]}, with MAE {w.MAE:.1f} and RMSE {w.RMSE:.1f} across {int(w["n"])} hours. Weather changes, special events, missing history, reporting delays, and demand shifts remain important failure modes.')
-    para('Before deployment, test the frozen decision rule prospectively and confirm that counts are available by issuance. Monitor missing hours, weekly MAE and RMSE against the concurrent baseline, commute-hour errors, interval coverage and width, and assumed-cost outcomes. Review sustained coverage below 90% or errors above baseline for two weeks; recalibrate or retrain using chronological data. Obtain station inventory and unmet-demand evidence before making station allocation claims. This project is a research prototype; it has not been deployed or submitted. OpenAI Codex assisted with coding, analysis and drafting; Anshuman is responsible for reviewing and explaining the work.')
-    para('Source: Fanaee-T &amp; Gama (2013), Event labeling combining ensemble detectors and background knowledge, doi:10.1007/s13748-013-0040-3. UCI Bike Sharing dataset, dataset 275. Full methods, plots, assumptions and checks accompany the executed notebooks.')
+    para('Before deployment, test the frozen decision rule prospectively and confirm that counts are available by issuance. Monitor missing hours, weekly MAE and RMSE against the concurrent baseline, commute-hour errors, interval coverage and width, and assumed-cost outcomes. Review sustained coverage below 90% or errors above baseline for two weeks; recalibrate or retrain using chronological data. Obtain station inventory and unmet-demand evidence before making station allocation claims. This personal research prototype has not been deployed. OpenAI Codex helped debug and resolve issues, and assisted with implementation, analysis and drafting. Anshuman is responsible for reviewing and explaining the work.')
+    para('Source: Fanaee-T &amp; Gama (2013), Event labeling combining ensemble detectors and background knowledge, doi:10.1007/s13748-013-0040-3. UCI Bike Sharing dataset, dataset 275. Full methods, plots, assumptions and checks accompany the executed analysis notebook.')
     doc=SimpleDocTemplate(str(ROOT/'reports/memo.pdf'),title='Bike Sharing Predictive Analysis — Decision Memo',author='Anshuman',pagesize=letter,rightMargin=48,leftMargin=48,topMargin=42,bottomMargin=42)
     def footer(canvas,doc):
         canvas.setFont('BodyFont',9);canvas.setFillColor(gray);canvas.drawString(48,22,f'Anshuman | Bike Sharing Predictive Analysis | {doc.page}')
@@ -596,7 +596,7 @@ def main(argv=None):
     first = pd.DataFrame({'actual': d['y'].loc[d['test']],
         'seasonal_naive': d['X'].loc[d['test'], 'lag_168'], 'ridge': ridge_pred})
     first_metrics = pd.DataFrame({n:score(first.actual,first[n]) for n in ['seasonal_naive','ridge']}).T
-    first_metrics.to_csv(ROOT/'results/milestone2_metrics.csv')
+    first_metrics.to_csv(ROOT/'results/baseline_metrics.csv')
     evaluation_plots(first)
     print('Tuning boosting on proper-training time folds only...', flush=True)
     a = run_advanced(d, ridge_pred)
@@ -617,8 +617,8 @@ def main(argv=None):
     print('\nINTERVALS', json.dumps(a['intervals'],indent=2))
     print('\nCOST SENSITIVITY\n'+a['costs'].to_string(index=False))
     print('\nOutputs saved to:', ROOT)
-    print('AI assistance: OpenAI Codex assisted with code and drafting. Author review required.')
-    print('No GitHub push, deployment, or course submission is performed by this script.')
+    print('AI assistance: OpenAI Codex helped debug and resolve issues, implement code, and draft documentation. Author review required.')
+    print('Analysis outputs saved locally; this script does not deploy a service.')
     return a
 
 
@@ -742,7 +742,7 @@ def execute_notebooks():
     os.environ['JUPYTER_PATH']=str(ROOT/'.jupyter')
     os.environ['JUPYTER_RUNTIME_DIR']='/tmp/bike-jupyter-runtime'
     Path(os.environ['JUPYTER_RUNTIME_DIR']).mkdir(exist_ok=True)
-    for filename in ['coursework/milestone2.ipynb','coursework/milestone3.ipynb','analysis.ipynb']:
+    for filename in ['analysis.ipynb']:
         path=ROOT/filename
         nb=nbformat.read(path,as_version=4)
         print('Executing',filename,flush=True)
@@ -757,14 +757,14 @@ def execute_notebooks():
 
 
 def verify_artifacts():
-    """Check results and rubric artifacts without retraining or selecting models."""
+    """Check results and portfolio artifacts without retraining or selecting models."""
     import nbformat
     from pypdf import PdfReader
     report={'notebooks':{},'pdfs':{},'results':{},'limitations':[
         'Google-hosted Colab execution has not been independently verified.',
         'Nominal 90% temporal prediction intervals under-cover.',
-        'Research prototype; no deployment or course submission is claimed.']}
-    for name in ['analysis.ipynb','coursework/milestone2.ipynb','coursework/milestone3.ipynb']:
+        'Personal research prototype; not deployed in production.']}
+    for name in ['analysis.ipynb']:
         nb=nbformat.read(ROOT/name,as_version=4);nbformat.validate(nb)
         cells=[c for c in nb.cells if c.cell_type=='code']
         assert cells and all(c.execution_count is not None for c in cells)
@@ -824,7 +824,6 @@ def verify_artifacts():
     assert (ROOT/'visualizations/staffing_interactive.html').stat().st_size>10000
     report['optimization']={'complete_days':48,'certified_optimal_solves':144,'costs_recomputed':True}
 
-    assert len((ROOT/'coursework/milestone1_canvas.txt').read_text().strip().split('\n\n'))==1
     # Local ignored environments are excluded from this repository inventory.
     excluded={'.venv','.git','.jupyter','.pytest_cache','__pycache__','run_outputs'}
     files=[p for p in ROOT.rglob('*') if p.is_file() and not excluded.intersection(p.relative_to(ROOT).parts)]

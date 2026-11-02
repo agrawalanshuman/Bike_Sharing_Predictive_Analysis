@@ -1,12 +1,35 @@
 # Bike Sharing Predictive Analysis
 
-**Anshuman · Next-day hourly demand forecasting**
+**Anshuman · Personal data science portfolio · Forecasting and decision optimization**
 
-[Open in Google Colab](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/open_in_colab.ipynb) · [Read the analysis](analysis.ipynb) · [Business memo](reports/memo.pdf) · [Presentation](reports/presentation.pdf)
+[Open in Google Colab](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/analysis.ipynb) · [Read the analysis](analysis.ipynb) · [Business memo](reports/memo.pdf) · [Presentation](reports/presentation.pdf)
 
 A reproducible forecasting project that asks whether machine learning can improve the next day's system-wide bike-sharing capacity plan. At 11:59 PM, the workflow predicts each of the following day's 24 hourly rental counts using information available before issuance. The intended decision-maker is a hypothetical operations manager reviewing aggregate service capacity and staffing.
 
-The project uses real Capital Bikeshare observations, a same-hour-last-week benchmark, chronological validation, prediction intervals and local explanations. It is a personal portfolio project developed by Anshuman with an accompanying [ISOM 835 assessment map](coursework/README.md).
+The project uses real Capital Bikeshare observations, a same-hour-last-week benchmark, chronological validation, prediction intervals and local explanations. Built as a personal data science portfolio by **Anshuman**, it connects a business question to audited data, reproducible machine learning, uncertainty assessment, and constrained decision optimization.
+
+## Skills demonstrated
+
+| Data science capability | Evidence in this project |
+|---|---|
+| Business problem framing | Translate next-day rental forecasts into an explicit staffing decision with measurable cost assumptions |
+| Data auditing with pandas and NumPy | Validate source integrity, reconstruct the hourly timeline, identify missing observations, and prevent target leakage |
+| Time-series feature engineering | Build timestamp-aligned demand lags, historical rolling windows, calendar features, and commute interactions |
+| Machine learning with scikit-learn | Compare a seasonal benchmark, Ridge regression, and tuned histogram gradient boosting using training-only pipelines |
+| Experiment design and evaluation | Use chronological validation, a separate calibration period, common scoring samples, MAE/RMSE, and error slices |
+| Model interpretation and uncertainty | Explain individual predictions with SHAP and measure MAPIE interval coverage rather than assuming nominal coverage |
+| Operations research with gurobipy | Formulate integer staffing decisions, enforce capacity and budget constraints, and verify solver optimality |
+| Visualization and communication | Present Matplotlib diagnostics, an interactive Plotly report, a model card, an executive memo, and a presentation |
+| Reproducible Python development | Package the workflow in one Python file with pinned dependencies, 17 automated checks, and artifact verification |
+
+## What this project can be used for
+
+- **Portfolio and technical interviews:** walk through a complete forecasting-to-decision workflow, explain leakage prevention, and discuss why the simpler model performed best.
+- **Demand-planning research:** explore hourly demand patterns and compare next-day forecasts against an interpretable seasonal benchmark.
+- **Staffing scenario analysis:** vary explicit operational assumptions and examine forecast-driven staffing costs before considering a prospective pilot.
+- **A reusable project pattern:** adapt the chronological evaluation, uncertainty analysis, and constrained planning workflow to other hourly demand datasets after validating their data availability and operating constraints.
+
+The outputs support research and scenario planning. Real operational use requires current data, validated throughput and cost assumptions, and prospective evaluation; historical scenario costs are not realized savings.
 
 ## Findings
 
@@ -22,7 +45,7 @@ The more complex model did not achieve the best predictive accuracy. Ridge is th
 
 The boosting model's MAPIE intervals targeted 90% coverage and achieved **85.64% empirical coverage**, with an average width of **251.42 rentals**. This shortfall matters: temporal dependence and changing demand undermine the exchangeability assumptions behind standard conformal guarantees.
 
-For the fixed planning rule `ceil(max(0, forecast))`, assumed costs of **$5 per underplanned rental-unit** and **$1 per excess unit** produce baseline proxy cost of **$230,005** and boosting proxy cost of **$133,389** across the common test sample. The **$96,616 difference is a hypothetical scenario**, not measured operating savings or evidence of a causal effect. Nine combinations of assumed shortage and excess costs are reported. This requested baseline-versus-boosting comparison does not establish that boosting is the best operational policy.
+For the fixed planning rule `ceil(max(0, forecast))`, assumed costs of **$5 per underplanned rental-unit** and **$1 per excess unit** produce baseline proxy cost of **$230,005** and boosting proxy cost of **$133,389** across the common test sample. The **$96,616 difference is a hypothetical scenario**, not measured operating savings or evidence of a causal effect. Nine combinations of assumed shortage and excess costs are reported. This baseline-versus-boosting comparison does not establish that boosting is the best operational policy.
 
 ![Observed and forecast hourly rentals in the first held-out week](visualizations/actual_vs_predicted.png)
 
@@ -46,8 +69,8 @@ The target components `casual` and `registered` are excluded. Actual target-hour
 
 ## Forecasts to decisions: Gurobi optimization
 
-The project now uses **gurobipy 13.0.3** to select integer staffing assignments and **Plotly 7.1.0**
-to explore daily planning costs interactively. Existing forecasting models and their metrics are retained.
+The project uses **gurobipy 13.0.3** to select integer staffing assignments and **Plotly 7.1.0**
+to explore daily planning costs interactively. Forecast quality and planning outcomes are evaluated separately.
 
 For each next day, six nonoverlapping four-hour shifts start at 00:00, 04:00, 08:00, 12:00, 16:00
 and 20:00. Gurobi chooses 0–20 assignments per shift with at most 48 assignments per day
@@ -74,7 +97,7 @@ the original point-capacity analysis, so the two cost totals should not be compa
 This extension was designed after the forecast test scores were known. It is exploratory retrospective
 analysis, not an untouched policy holdout or evidence of causal savings. Throughput, wages, budgets,
 shift lengths and labor constraints must be validated with an operator before any deployment.
-The original forecast metrics remain unchanged.
+Ridge remains the leading candidate for prospective validation.
 
 ![Gurobi shift planning and hypothetical costs](visualizations/staffing_optimization.png)
 
@@ -94,7 +117,7 @@ licensing fails or optimality is not certified; it does not silently replace Gur
 
 [`bike_sharing.py`](bike_sharing.py) contains the entire implementation: source loading, feature generation, preprocessing pipelines, model tuning, scoring, MAPIE intervals, three SHAP waterfalls, sliced errors, capacity-cost sensitivity, figures, PDFs, Gurobi shift optimization, Plotly interactive reporting, notebook execution and validation checks. There are no additional project Python modules.
 
-The executed [`analysis.ipynb`](analysis.ipynb) tells the full analytical story. The two notebooks under [`coursework/`](coursework/) retain the staged baseline and advanced-model deliverables. They call the same implementation to keep the methods consistent.
+The executed [`analysis.ipynb`](analysis.ipynb) tells the full analytical story, from the first baseline through advanced modeling and optimization. It calls the same Python implementation used by the command-line workflow.
 
 ## Run the project
 
@@ -116,7 +139,7 @@ python bike_sharing.py --data-file data/hour.csv --output-dir run_outputs
 
 The loader uses the supplied real source file or downloads the checksum-verified UCI data. It never substitutes synthetic observations. The fixed random seed is 835 wherever randomness applies.
 
-To refresh the executed notebooks and presentation documents from the repository root, then verify the saved artifacts:
+To refresh the executed notebook and presentation documents from the repository root, then verify the saved artifacts:
 
 ```bash
 python bike_sharing.py --execute-notebooks
@@ -124,11 +147,11 @@ python bike_sharing.py --build-documents --output-dir .
 python bike_sharing.py --verify
 ```
 
-The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. PDF page limits are checked with the pinned `pypdf` dependency.
+The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. The two-page memo and ten-slide presentation formats are checked with the pinned `pypdf` dependency.
 
 ### Google Colab
 
-Open the [Colab launcher](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/open_in_colab.ipynb) and run its cells in order: install dependencies, execute the Python file, display figures, and optionally download the outputs. A Git clone and Google Drive mount are unnecessary. If conflicting packages were already imported, restart the runtime after installation.
+Open the [analysis notebook in Colab](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/analysis.ipynb) and run the cells in order. Its first code cell clones the public repository and installs the pinned dependencies when running in Colab. The notebook uses the same `bike_sharing.py` implementation as the local workflow; no separate launcher or Google Drive mount is needed. If packages were already imported before installation, restart the runtime and rerun the cells. A compatible Python runtime and a usable Gurobi license are required.
 
 The standalone workflow is validated locally. Execution inside Google's hosted Colab service has not been independently verified.
 
@@ -138,12 +161,10 @@ The standalone workflow is validated locally. Execution inside Google's hosted C
 |---|---|
 | `bike_sharing.py` | Sole Python source file and command-line interface |
 | `analysis.ipynb` | Executed integrated analysis with visible results |
-| `open_in_colab.ipynb` | Interactive Colab launcher |
 | `data/` | Original hourly source data and attribution |
 | `results/` | Predictions, metrics, tuning results, intervals, slices and SHAP values |
 | `visualizations/` | Forecast, residual, interval, explanation and business-analysis figures |
 | `reports/` | Two-page decision memo, ten-slide presentation and model card |
-| `coursework/` | Assessment mapping, milestone notebooks and original discussion materials |
 
 ## Interpretation and limitations
 
@@ -153,6 +174,6 @@ The analysis assumes hourly counts are finalized by the prior day's 11:59 PM iss
 
 ## Authorship and attribution
 
-**Author: Anshuman.** OpenAI Codex assisted with implementation, debugging, documentation, figures and drafting. Anshuman is responsible for reviewing and explaining the methods, assumptions and conclusions. The project has not been deployed; no class submission or peer-discussion participation is claimed.
+**Author: Anshuman.** This is a personal data science portfolio project. I used **OpenAI Codex to debug code and resolve implementation issues**, with additional assistance on implementation, tests, analysis, visualizations, documentation, and report drafting. I am responsible for reviewing and explaining the methods, assumptions, and conclusions. Numerical findings are supported by executed code, saved predictions, and validation checks. This project has not been deployed in production.
 
-Data citation: Fanaee-T, Hadi, and João Gama (2013), *Event labeling combining ensemble detectors and background knowledge*, Progress in Artificial Intelligence. DOI: [10.1007/s13748-013-0040-3](https://doi.org/10.1007/s13748-013-0040-3). See [`data/README.md`](data/README.md) for source provenance and checksum. Learning-resource attribution and the assessment checklist are recorded in [`coursework/README.md`](coursework/README.md); copied lecture files are not distributed in this repository.
+Data citation: Fanaee-T, Hadi, and João Gama (2013), *Event labeling combining ensemble detectors and background knowledge*, Progress in Artificial Intelligence. DOI: [10.1007/s13748-013-0040-3](https://doi.org/10.1007/s13748-013-0040-3). See [`data/README.md`](data/README.md) for source provenance and checksum.
