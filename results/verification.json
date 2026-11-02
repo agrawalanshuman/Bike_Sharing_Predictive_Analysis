@@ -8,12 +8,10 @@
   },
   "pdfs": {
     "reports/presentation.pdf": {
-      "pages": 10,
-      "page_limit": 10
+      "status": "not generated; optional export"
     },
     "reports/memo.pdf": {
-      "pages": 2,
-      "page_limit": 2
+      "status": "not generated; optional export"
     }
   },
   "results": {
@@ -49,9 +47,6 @@
     "bike_sharing.py",
     "data/README.md",
     "data/hour.csv",
-    "reports/memo.pdf",
-    "reports/model_card.md",
-    "reports/presentation.pdf",
     "requirements.txt",
     "results/baseline_metrics.csv",
     "results/costs.csv",

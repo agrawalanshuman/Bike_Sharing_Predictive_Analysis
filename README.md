@@ -1,39 +1,12 @@
 # Bike Sharing Predictive Analysis
 
-**Anshuman · Personal data science portfolio · Forecasting and decision optimization**
+**Anshuman · Personal data science portfolio**
 
-[Open in Google Colab](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/analysis.ipynb) · [Read the analysis](analysis.ipynb) · [Business memo](reports/memo.pdf) · [Presentation](reports/presentation.pdf)
+**Business problem:** forecast tomorrow’s hourly bike rentals to inform staffing plans more effectively than repeating last week’s demand.
 
-A reproducible forecasting project that asks whether machine learning can improve the next day's system-wide bike-sharing capacity plan. At 11:59 PM, the workflow predicts each of the following day's 24 hourly rental counts using information available before issuance. The intended decision-maker is a hypothetical operations manager reviewing aggregate service capacity and staffing.
+![Observed rentals versus last-week baseline, Ridge and boosting in the first test week](visualizations/actual_vs_predicted.png)
 
-The project uses real Capital Bikeshare observations, a same-hour-last-week benchmark, chronological validation, prediction intervals and local explanations. Built as a personal data science portfolio by **Anshuman**, it connects a business question to audited data, reproducible machine learning, uncertainty assessment, and constrained decision optimization.
-
-## Skills demonstrated
-
-| Data science capability | Evidence in this project |
-|---|---|
-| Business problem framing | Translate next-day rental forecasts into an explicit staffing decision with measurable cost assumptions |
-| Data auditing with pandas and NumPy | Validate source integrity, reconstruct the hourly timeline, identify missing observations, and prevent target leakage |
-| Time-series feature engineering | Build timestamp-aligned demand lags, historical rolling windows, calendar features, and commute interactions |
-| Machine learning with scikit-learn | Compare a seasonal benchmark, Ridge regression, and tuned histogram gradient boosting using training-only pipelines |
-| Experiment design and evaluation | Use chronological validation, a separate calibration period, common scoring samples, MAE/RMSE, and error slices |
-| Model interpretation and uncertainty | Explain individual predictions with SHAP and measure MAPIE interval coverage rather than assuming nominal coverage |
-| Operations research with gurobipy | Formulate integer staffing decisions, enforce capacity and budget constraints, and verify solver optimality |
-| Visualization and communication | Present Matplotlib diagnostics, an interactive Plotly report, a model card, an executive memo, and a presentation |
-| Reproducible Python development | Package the workflow in one Python file with pinned dependencies, 17 automated checks, and artifact verification |
-
-## What this project can be used for
-
-- **Portfolio and technical interviews:** walk through a complete forecasting-to-decision workflow, explain leakage prevention, and discuss why the simpler model performed best.
-- **Demand-planning research:** explore hourly demand patterns and compare next-day forecasts against an interpretable seasonal benchmark.
-- **Staffing scenario analysis:** vary explicit operational assumptions and examine forecast-driven staffing costs before considering a prospective pilot.
-- **A reusable project pattern:** adapt the chronological evaluation, uncertainty analysis, and constrained planning workflow to other hourly demand datasets after validating their data availability and operating constraints.
-
-The outputs support research and scenario planning. Real operational use requires current data, validated throughput and cost assumptions, and prospective evaluation; historical scenario costs are not realized savings.
-
-## Findings
-
-On **1,302 comparable held-out hours**, Ridge regression outperformed both the seasonal benchmark and tuned gradient boosting. MAE and RMSE are in rentals per hour; lower is better.
+**Held-out results · 1,302 comparable hours · errors in rentals/hour (lower is better)**
 
 | Method | MAE | RMSE | MAE reduction vs. baseline |
 |---|---:|---:|---:|
@@ -41,15 +14,29 @@ On **1,302 comparable held-out hours**, Ridge regression outperformed both the s
 | **Ridge regression** | **64.10** | **96.10** | **10.90%** |
 | Tuned histogram gradient boosting | 69.30 | 108.42 | 3.67% |
 
+**Run with Python 3.12** (inside the cloned repository; a virtual environment is recommended):
+
+```bash
+python -m pip install -r requirements.txt
+python -m streamlit run bike_sharing.py  # interactive historical demo
+# Or reproduce the complete analysis: python bike_sharing.py
+```
+
+The demo displays saved outputs and needs no solver license. Recomputing the analysis requires a usable Gurobi license.
+
+**Time-based split:** fit through October 7, 2012 → calibrate October 8–November 4 → test November 5–December 30. Tuning and preprocessing use training data only; no random train/test split.
+
+**Decision insight:** pilot Ridge first. It reduced MAE by **10.90%** versus last week’s same hour and had the lowest hypothetical staffing cost among the tested policies. Validate it prospectively before changing staffing; these data cannot estimate extra bikes needed at individual stations.
+
+[Interactive demo setup](#interactive-demo) · [Full analysis](analysis.ipynb) · [Open in Google Colab](https://colab.research.google.com/github/agrawalanshuman/Bike_Sharing_Predictive_Analysis/blob/main/analysis.ipynb)
+
+## Findings and interpretation
+
 The more complex model did not achieve the best predictive accuracy. Ridge is the leading candidate for a prospective pilot, with seasonal naive retained as a reference. The comparison describes these held-out weeks; it does not establish future performance.
 
 The boosting model's MAPIE intervals targeted 90% coverage and achieved **85.64% empirical coverage**, with an average width of **251.42 rentals**. This shortfall matters: temporal dependence and changing demand undermine the exchangeability assumptions behind standard conformal guarantees.
 
 For the fixed planning rule `ceil(max(0, forecast))`, assumed costs of **$5 per underplanned rental-unit** and **$1 per excess unit** produce baseline proxy cost of **$230,005** and boosting proxy cost of **$133,389** across the common test sample. The **$96,616 difference is a hypothetical scenario**, not measured operating savings or evidence of a causal effect. Nine combinations of assumed shortage and excess costs are reported. This baseline-versus-boosting comparison does not establish that boosting is the best operational policy.
-
-![Observed and forecast hourly rentals in the first held-out week](visualizations/actual_vs_predicted.png)
-
-*First held-out week: the same observed hours for the baseline, Ridge and boosting forecasts.*
 
 ## Data and validation
 
@@ -113,9 +100,32 @@ license using Gurobi's official instructions: https://support.gurobi.com/.
 Keep any credentials outside the repository and notebooks. The workflow raises an explicit error if
 licensing fails or optimality is not certified; it does not silently replace Gurobi or fabricate results.
 
+## Skills demonstrated
+
+| Data science capability | Evidence in this project |
+|---|---|
+| Business problem framing | Translate next-day rental forecasts into an explicit staffing decision with measurable cost assumptions |
+| Data auditing with pandas and NumPy | Validate source integrity, reconstruct the hourly timeline, identify missing observations, and prevent target leakage |
+| Time-series feature engineering | Build timestamp-aligned demand lags, historical rolling windows, calendar features, and commute interactions |
+| Machine learning with scikit-learn | Compare a seasonal benchmark, Ridge regression, and tuned histogram gradient boosting using training-only pipelines |
+| Experiment design and evaluation | Use chronological validation, a separate calibration period, common scoring samples, MAE/RMSE, and error slices |
+| Model interpretation and uncertainty | Explain individual predictions with SHAP and measure MAPIE interval coverage rather than assuming nominal coverage |
+| Operations research with gurobipy | Formulate integer staffing decisions, enforce capacity and budget constraints, and verify solver optimality |
+| Visualization and communication | Present Matplotlib diagnostics, Plotly charts, a Streamlit demo, and optional model-card and report exports |
+| Reproducible Python development | Package the workflow in one Python file with pinned dependencies, 17 automated checks, and artifact verification |
+
+## What this project can be used for
+
+- **Portfolio and technical interviews:** walk through a complete forecasting-to-decision workflow, explain leakage prevention, and discuss why the simpler model performed best.
+- **Demand-planning research:** explore hourly demand patterns and compare next-day forecasts against an interpretable seasonal benchmark.
+- **Staffing scenario analysis:** vary explicit operational assumptions and examine forecast-driven staffing costs before considering a prospective pilot.
+- **A reusable project pattern:** adapt the chronological evaluation, uncertainty analysis, and constrained planning workflow to other hourly demand datasets after validating their data availability and operating constraints.
+
+The outputs support research and scenario planning. Real operational use requires current data, validated throughput and cost assumptions, and prospective evaluation; historical scenario costs are not realized savings.
+
 ## One Python file
 
-[`bike_sharing.py`](bike_sharing.py) contains the entire implementation: source loading, feature generation, preprocessing pipelines, model tuning, scoring, MAPIE intervals, three SHAP waterfalls, sliced errors, capacity-cost sensitivity, figures, PDFs, Gurobi shift optimization, Plotly interactive reporting, notebook execution and validation checks. There are no additional project Python modules.
+[`bike_sharing.py`](bike_sharing.py) contains the entire implementation: source loading, feature generation, preprocessing pipelines, model tuning, scoring, MAPIE intervals, three SHAP waterfalls, sliced errors, capacity-cost sensitivity, figures, PDFs, Gurobi shift optimization, Plotly interactive reporting, the Streamlit demo, notebook execution and validation checks. There are no additional project Python modules.
 
 The executed [`analysis.ipynb`](analysis.ipynb) tells the full analytical story, from the first baseline through advanced modeling and optimization. It calls the same Python implementation used by the command-line workflow.
 
@@ -131,7 +141,7 @@ python bike_sharing.py --self-test
 python bike_sharing.py
 ```
 
-The default run recomputes the analysis and writes fresh outputs under `run_outputs/`. The saved portfolio results remain in `results/`, `visualizations/` and `reports/`. To choose an output location or provide the original data explicitly:
+The default run recomputes the analysis and writes fresh outputs under `run_outputs/`. The saved portfolio results remain in `results/` and `visualizations/`. Reports can be generated locally on demand. To choose an output location or provide the original data explicitly:
 
 ```bash
 python bike_sharing.py --data-file data/hour.csv --output-dir run_outputs
@@ -139,7 +149,7 @@ python bike_sharing.py --data-file data/hour.csv --output-dir run_outputs
 
 The loader uses the supplied real source file or downloads the checksum-verified UCI data. It never substitutes synthetic observations. The fixed random seed is 835 wherever randomness applies.
 
-To refresh the executed notebook and presentation documents from the repository root, then verify the saved artifacts:
+To refresh the executed notebook or generate optional presentation documents from the repository root, then verify the saved artifacts:
 
 ```bash
 python bike_sharing.py --execute-notebooks
@@ -147,7 +157,20 @@ python bike_sharing.py --build-documents --output-dir .
 python bike_sharing.py --verify
 ```
 
-The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. The two-page memo and ten-slide presentation formats are checked with the pinned `pypdf` dependency.
+The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. When optional PDFs are present, their two-page memo and ten-slide presentation formats are checked with the pinned `pypdf` dependency.
+
+## Interactive demo
+
+Run `python -m streamlit run bike_sharing.py` (or `python bike_sharing.py --demo`) and open the local URL shown in your terminal, normally `http://localhost:8501`.
+
+- Select a model and test date to compare forecasts with observed rentals and last week’s same hour.
+- Inspect boosting prediction intervals, including their measured coverage shortfall.
+- Explore saved Gurobi shift assignments and hypothetical costs for 48 complete days.
+- Download a selected day’s scored forecasts and review the chronological evaluation design.
+
+This is an interactive viewer of saved historical results. It does not train models, solve new plans, or forecast current demand, so viewing it needs no Gurobi license. Missing scored hours remain gaps. All application and analysis code stays in **one Python file**.
+
+**Public hosting:** the app has been tested locally, but no public demo URL is deployed yet. To publish through [Streamlit Community Cloud](https://share.streamlit.io/), connect your GitHub account, create an app from `agrawalanshuman/Bike_Sharing_Predictive_Analysis`, choose branch `main`, set the entry point to `bike_sharing.py`, and select Python 3.12. Dependencies come from `requirements.txt`; no data credentials or solver license are needed for the viewer. After successful deployment, add its actual URL to this README and your LinkedIn post.
 
 ### Google Colab
 
@@ -164,7 +187,7 @@ The standalone workflow is validated locally. Execution inside Google's hosted C
 | `data/` | Original hourly source data and attribution |
 | `results/` | Predictions, metrics, tuning results, intervals, slices and SHAP values |
 | `visualizations/` | Forecast, residual, interval, explanation and business-analysis figures |
-| `reports/` | Two-page decision memo, ten-slide presentation and model card |
+| `reports/` (generated locally) | Optional decision memo, presentation and model card exports |
 
 ## Interpretation and limitations
 
