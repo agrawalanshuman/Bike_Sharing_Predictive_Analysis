@@ -46,3 +46,6 @@ run_outputs/
 # Gurobi local license and solver configuration
 *.lic
 gurobi.env
+
+# Streamlit deployment secrets must stay local
+.streamlit/secrets.toml

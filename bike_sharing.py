@@ -13,7 +13,7 @@ os.environ.setdefault('MPLCONFIGDIR', '/tmp/bike-mpl')
 
 
 # ==================== FORECASTING ====================
-"""Leakage-safe next-calendar-day forecasting. All fitted transforms live in pipelines."""
+# Leakage-safe next-calendar-day forecasting. All fitted transforms live in pipelines.
 from pathlib import Path
 import hashlib
 import json
@@ -30,6 +30,7 @@ from sklearn.metrics import mean_absolute_error, root_mean_squared_error
 
 ROOT = Path(__file__).resolve().parent
 SEED = 835
+DATA_SHA256 = 'e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f'
 CATEGORICAL = ['hour', 'dow', 'month', 'holiday', 'workingday']
 NUMERIC = ['lag_24', 'lag_48', 'lag_168', 'roll_mean_7d', 'roll_max_7d',
            'roll_count_7d', 'commute_workday', 'hour_sin', 'hour_cos', 'trend_days']
@@ -41,7 +42,7 @@ EXCLUDED = ['casual', 'registered', 'cnt', 'temp', 'atemp', 'hum', 'windspeed',
 def load_data(path=None):
     """Keep missing target hours as NaN, never interpolate rental observations."""
     path = Path(path or ROOT / 'data/hour.csv')
-    expected = 'e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f'
+    expected = DATA_SHA256
     if hashlib.sha256(path.read_bytes()).hexdigest() != expected:
         raise ValueError('Hourly source checksum differs from the audited UCI dataset')
     raw = pd.read_csv(path)
@@ -61,6 +62,10 @@ def issue_times(index):
 
 def make_features(grid):
     idx, y = grid.index, grid['cnt']
+    require(isinstance(idx, pd.DatetimeIndex) and idx.tz is None and idx.is_unique
+            and idx.is_monotonic_increasing and len(idx) > 0
+            and idx.equals(pd.date_range(idx[0], idx[-1], freq='h')),
+            'Features require a sorted, unique, timezone-naive full hourly grid; retain missing rows')
     # Holiday metadata are treated as a published calendar, not estimated from outcomes.
     holiday_by_date = grid.groupby(idx.normalize())['holiday'].first()
     holiday = holiday_by_date.reindex(idx.normalize()).to_numpy()
@@ -113,6 +118,7 @@ def prepare():
 
 
 def build_pipeline(kind):
+    require(kind in {'ridge','boost'}, 'Unknown pipeline kind; choose ridge or boost')
     steps = [('impute', SimpleImputer(strategy='median', add_indicator=True))]
     if kind == 'ridge':
         steps.append(('scale', StandardScaler()))
@@ -253,7 +259,7 @@ def forecast_day(model, history_grid, target_date, holiday):
 
 
 # ==================== PLOTS ====================
-"""Figures and faithful local explanations from fitted model outputs."""
+# Figures and faithful local explanations from fitted model outputs.
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -357,7 +363,7 @@ def business_plot(costs):
 
 
 # ==================== DOCUMENTS ====================
-"""Business-facing documents use persisted, executed results only."""
+# Business-facing documents use persisted, executed results only.
 from pathlib import Path
 import json
 import pandas as pd
@@ -522,10 +528,15 @@ def ensure_source_data(data_file=None):
     import urllib.request
     import io
     import zipfile
-    expected = 'e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f'
+    expected = DATA_SHA256
     dest = ROOT/'data/hour.csv'
     dest.parent.mkdir(parents=True, exist_ok=True)
     local = Path(data_file).expanduser().resolve() if data_file else Path(__file__).resolve().parent/'data/hour.csv'
+    if data_file is not None:
+        if not local.is_file():
+            raise FileNotFoundError('Explicit --data-file does not exist or is not a file')
+        if hashlib.sha256(local.read_bytes()).hexdigest() != expected:
+            raise ValueError('Explicit --data-file differs from the audited UCI source')
     if not dest.exists():
         if local.is_file():
             payload = local.read_bytes()
@@ -562,26 +573,32 @@ def main(argv=None):
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir', type=Path, help='Destination for a run, or project directory for an action')
+    parser.add_argument('--report-file', type=Path, help='Save a new test/verification report without changing historical evidence')
     parser.add_argument('--data-file', type=Path, help='Optional path to the original hour.csv')
     actions = parser.add_mutually_exclusive_group()
-    actions.add_argument('--self-test', action='store_true', help='Run 17 embedded forecasting and optimization tests')
+    actions.add_argument('--self-test', action='store_true', help='Run 27 embedded forecasting, optimization and regression tests')
     actions.add_argument('--verify', action='store_true', help='Verify saved notebook, report and result artifacts')
     actions.add_argument('--execute-notebooks', action='store_true', help='Execute the integrated analysis notebook')
     actions.add_argument('--build-documents', action='store_true', help='Build PDFs from retained results')
+    actions.add_argument('--test-demo', action='store_true', help='Run automated Streamlit regression tests')
     actions.add_argument('--demo', action='store_true', help='Launch the interactive Streamlit demo')
     args = parser.parse_args(argv)
+    if args.report_file and not (args.self_test or args.verify or args.test_demo):
+        parser.error('--report-file requires --self-test, --test-demo, or --verify')
     if args.demo:
         import subprocess, sys
         return subprocess.run([sys.executable, '-m', 'streamlit', 'run', str(Path(__file__).resolve()),
                                '--browser.gatherUsageStats=false'], check=True)
-    action = args.self_test or args.verify or args.execute_notebooks or args.build_documents
+    action = args.self_test or args.verify or args.execute_notebooks or args.build_documents or args.test_demo
     if action and args.output_dir:
         ROOT = args.output_dir.expanduser().resolve()
         OUT = ROOT/'visualizations'
     if args.self_test:
-        return run_self_tests()
+        return run_self_tests(args.report_file)
     if args.verify:
-        return verify_artifacts()
+        return verify_artifacts(args.report_file)
+    if args.test_demo:
+        return run_demo_tests(args.report_file)
     if args.execute_notebooks:
         return execute_notebooks()
     if args.build_documents:
@@ -696,8 +713,22 @@ def test_daily_api_produces_24_forecasts_without_accessing_target_day(d):
     expected=np.maximum(0,model.predict(d['X'].loc[first.index]))
     assert np.allclose(first.forecast,expected)
 
-def run_self_tests():
-    """Run 13 forecasting checks and four optimization checks without requiring a separate Python test file."""
+def write_check_report(report, report_file):
+    if report_file is not None:
+        path = Path(report_file).expanduser().resolve()
+        repository = Path(__file__).resolve().parent
+        require(path != repository and not any(path.is_relative_to(repository/folder)
+                for folder in ['results','data','visualizations']),
+                'Write new check reports outside the saved data/results/visualizations folders')
+        require(not path.exists(), 'Check report path already exists; use a new path')
+        path.parent.mkdir(parents=True,exist_ok=True)
+        path.write_text(json.dumps(report,indent=2))
+
+
+def run_self_tests(report_file=None):
+    """Run the original 17 checks plus ten input/artifact regression checks."""
+    if not __debug__:
+        raise RuntimeError("Run tests without Python -O; assertions must remain enabled")
     import unittest
     import functools
     def bind(function, *args):
@@ -723,11 +754,18 @@ def run_self_tests():
     for check in [test_optimizer_matches_enumeration,test_optimizer_feasibility_and_objective,
                   test_optimizer_no_actual_input_and_zero_demand,test_optimizer_rejects_invalid_forecast]:
         suite.addTest(unittest.FunctionTestCase(check))
+    for check in [test_explicit_source_errors_do_not_download, test_feature_grid_rejects_ambiguous_timestamps,
+                  test_unknown_pipeline_rejected, test_cost_rejects_invalid_actuals_and_plans,
+                  test_assumptions_rejected_before_solver, test_solver_error_classification,
+                  test_prediction_artifacts_reject_tampering,
+                  test_staffing_artifacts_reject_missing_duplicate_and_fractional_plans,
+                  test_check_reports_preserve_historical_evidence,
+                  test_optimized_python_cannot_report_false_success]:
+        suite.addTest(unittest.FunctionTestCase(check))
     result = unittest.TextTestRunner(verbosity=2).run(suite)
     report = {'tests':result.testsRun,'failures':len(result.failures),
               'errors':len(result.errors),'skipped':len(result.skipped)}
-    (ROOT/'results').mkdir(exist_ok=True)
-    (ROOT/'results/safety_tests.json').write_text(json.dumps(report,indent=2))
+    write_check_report(report, report_file)
     if not result.wasSuccessful():
         raise SystemExit(1)
     return report
@@ -761,8 +799,11 @@ def execute_notebooks():
         print('Completed:',filename,len(cells),'code cells',flush=True)
 
 
-def verify_artifacts():
+def verify_artifacts(report_file=None):
     """Check results and portfolio artifacts without retraining or selecting models."""
+    if not __debug__:
+        raise RuntimeError("Run verification without Python -O; assertions must remain enabled")
+    validated = load_saved_analysis()
     import nbformat
     from pypdf import PdfReader
     report={'notebooks':{},'pdfs':{},'results':{},'limitations':[
@@ -812,7 +853,7 @@ def verify_artifacts():
     pd.testing.assert_frame_equal(slices,expected,check_dtype=False,rtol=1e-10,atol=1e-10)
     tests=json.loads((ROOT/'results/safety_tests.json').read_text())
     assert tests=={'tests':17,'failures':0,'errors':0,'skipped':0}
-    report['tests']=tests
+    report['historical_test_evidence']=tests
     ops=json.loads((ROOT/'results/staffing_summary.json').read_text())
     daily=pd.read_csv(ROOT/'results/staffing_daily.csv')
     plans=pd.read_csv(ROOT/'results/staffing_plans.csv')
@@ -829,6 +870,22 @@ def verify_artifacts():
             assert np.isclose(row.objective,row.bound) and row.mip_gap==0
     expected_totals=daily.groupby('method')[['wages','shortage_units','excess_units','total_cost']].sum()
     pd.testing.assert_frame_equal(pd.read_csv(ROOT/'results/staffing_metrics.csv',index_col=0),expected_totals)
+    pd.testing.assert_frame_equal(pd.read_csv(ROOT/'results/costs.csv'),cost_analysis(p))
+    expected_sensitivity = []
+    for under in [2.,5.,10.]:
+        for excess in [.5,1.,2.]:
+            for method,row in expected_totals.iterrows():
+                expected_sensitivity.append({'under_cost':under,'excess_cost':excess,'method':method,
+                    'fixed_plan_cost':row.wages+under*row.shortage_units+excess*row.excess_units})
+    pd.testing.assert_frame_equal(pd.read_csv(ROOT/'results/staffing_sensitivity.csv'),pd.DataFrame(expected_sensitivity))
+    hourly = pd.read_csv(ROOT/'results/staffing_hourly.csv')
+    expected_hourly = []
+    for row in daily.itertuples():
+        x=plans[(plans.date==row.date)&(plans.method==row.method)].sort_values('start_hour').assignments.to_numpy()
+        for hour,(timestamp,record) in enumerate(p.loc[row.date].iterrows()):
+            expected_hourly.append({'timestamp':str(timestamp),'method':row.method,
+                'actual':float(record.actual),'capacity':float(x[hour//4]*STAFFING['throughput'])})
+    pd.testing.assert_frame_equal(hourly,pd.DataFrame(expected_hourly))
     assert (ROOT/'visualizations/staffing_interactive.html').stat().st_size>10000
     report['optimization']={'complete_days':48,'certified_optimal_solves':144,'costs_recomputed':True}
 
@@ -839,9 +896,117 @@ def verify_artifacts():
     assert pyfiles==['bike_sharing.py'],pyfiles
     report['python_files']=pyfiles
     report['generated_files']=[str(p.relative_to(ROOT)) for p in sorted(files)]
-    (ROOT/'results/verification.json').write_text(json.dumps(report,indent=2))
+    write_check_report(report, report_file)
     print(json.dumps({k:v for k,v in report.items() if k!='generated_files'},indent=2))
     return report
+
+
+def require(condition, message):
+    """An input/artifact contract that remains active under Python optimization."""
+    if not condition:
+        raise ValueError(message)
+
+
+def validate_staffing_assumptions(assumptions=None):
+    p = dict(STAFFING if assumptions is None else assumptions)
+    require(set(p) == set(STAFFING), 'Supply exactly the documented staffing assumptions')
+    require(all(isinstance(v, (int, float, np.integer, np.floating))
+                and not isinstance(v, (bool, np.bool_)) and np.isfinite(v) and v > 0
+                for v in p.values()), 'Staffing assumptions must be finite positive numbers')
+    require(p['shift_hours'] == 4, 'This model requires four-hour shifts')
+    require(all(float(p[k]).is_integer() for k in ['max_per_shift', 'assignment_budget']),
+            'Assignment limits must be integers')
+    return p
+
+
+def validate_hourly_values(values, label):
+    values = np.asarray(values, dtype=float)
+    require(values.shape == (24,) and np.isfinite(values).all() and (values >= 0).all(),
+            f'{label} must contain 24 finite nonnegative hourly values')
+    return values
+
+
+def validate_saved_analysis(bundle):
+    """Validate historical result relationships against the audited source, without fitting."""
+    p, m, plans, daily, totals, summary, ops = (bundle[k] for k in
+        ['predictions', 'metrics', 'plans', 'daily', 'totals', 'summary', 'operations'])
+    d = prepare()
+    models = ['seasonal_naive', 'ridge', 'boosting']
+    methods = ['flat_staffing', *models]
+    require(isinstance(p.index, pd.DatetimeIndex) and p.index.equals(d['test']),
+            'Prediction timestamps must exactly match the chronological common test sample')
+    columns = ['actual', *models, 'lower_90', 'upper_90']
+    require(set(columns).issubset(p.columns), 'Missing prediction columns')
+    values = p[columns].to_numpy(dtype=float)
+    require(np.isfinite(values).all() and (values >= 0).all(), 'Invalid prediction values')
+    require(np.allclose(p.actual, d['y'].loc[d['test']], rtol=0, atol=0),
+            'Saved actuals differ from the audited source')
+    require(np.allclose(p.seasonal_naive, d['X'].loc[d['test'], 'lag_168'], rtol=0, atol=0),
+            'Saved weekly baseline differs from the audited source')
+    require(m.index.is_unique and set(m.index) == set(models), 'Invalid model metric keys')
+    for model in models:
+        for metric, value in score(p.actual, p[model]).items():
+            require(np.isclose(m.loc[model, metric], value, rtol=1e-9), 'Model metrics do not match predictions')
+        gain = m.loc['seasonal_naive', 'MAE'] - m.loc[model, 'MAE']
+        require(np.isclose(m.loc[model, 'MAE_improvement'], gain), 'Invalid absolute MAE improvement')
+        require(np.isclose(m.loc[model, 'MAE_improvement_pct'], 100*gain/m.loc['seasonal_naive','MAE']),
+                'Invalid percentage MAE improvement')
+    require((p.lower_90 <= p.upper_90).all(), 'Prediction interval bounds are reversed')
+    require(summary['audit'] == d['audit'], 'Saved data/split audit differs from the source')
+    coverage = ((p.actual >= p.lower_90) & (p.actual <= p.upper_90)).mean()
+    require(np.isclose(coverage, summary['intervals']['empirical_coverage']), 'Interval coverage is inconsistent')
+    require(np.isclose((p.upper_90-p.lower_90).mean(), summary['intervals']['average_width']),
+            'Interval width is inconsistent')
+    require(summary['intervals']['nominal_coverage'] == .9 and
+            summary['intervals']['calibration_rows'] == len(d['cal']), 'Invalid calibration metadata')
+    require(ops['assumptions'] == STAFFING, 'Saved staffing assumptions differ from the recorded experiment')
+    dates = [str(date.date()) for date, frame in p.groupby(p.index.normalize())
+             if len(frame) == 24 and list(frame.index.hour) == list(range(24))]
+    expected_days = {(date, method) for date in dates for method in methods}
+    require(not daily.duplicated(['date','method']).any() and
+            set(zip(daily.date, daily.method)) == expected_days, 'Missing or duplicate policy-days')
+    expected_shifts = {(date, method, hour) for date, method in expected_days for hour in range(0,24,4)}
+    require(not plans.duplicated(['date','method','start_hour']).any() and
+            set(zip(plans.date,plans.method,plans.start_hour)) == expected_shifts,
+            'Missing or duplicate policy-shift assignments')
+    require(ops['complete_days'] == len(dates) and ops['evaluated_hours'] == 24*len(dates)
+            and ops['optimal_solves'] == 3*len(dates)
+            and ops['excluded_partial_days'] == p.index.normalize().nunique()-len(dates),
+            'Staffing sample counts are inconsistent')
+    for row in daily.itertuples():
+        day = p.loc[row.date]
+        x = plans[(plans.date == row.date) & (plans.method == row.method)].sort_values('start_hour').assignments.to_numpy()
+        actual_cost = staffing_cost(day.actual, x)
+        for field, value in actual_cost.items():
+            require(np.isclose(getattr(row, field), value, rtol=1e-9), 'Staffing cost components are inconsistent')
+        require(row.assignments == x.sum(), 'Daily assignment total is inconsistent')
+        if row.method == 'flat_staffing':
+            require(np.array_equal(x, np.full(6,8)) and row.status == 'FIXED', 'Invalid fixed staffing baseline')
+        else:
+            require(row.status == 'OPTIMAL' and row.mip_gap == 0 and row.variables == 54 and row.constraints == 25,
+                    'Invalid saved solver certificate')
+            require(np.isclose(staffing_cost(day[row.method],x)['total_cost'],row.objective,rtol=1e-9)
+                    and np.isclose(row.objective,row.bound,rtol=1e-9), 'Solver objective/bound mismatch')
+    expected_totals = daily.groupby('method')[['wages','shortage_units','excess_units','total_cost']].sum()
+    require(totals.index.is_unique and set(totals.index) == set(methods), 'Invalid aggregate policy keys')
+    require(np.allclose(totals.loc[expected_totals.index,expected_totals.columns], expected_totals, rtol=1e-9),
+            'Aggregate staffing costs are inconsistent')
+    return bundle
+
+
+def load_saved_analysis():
+    """Read-only boundary shared by verification and the historical demo."""
+    result = ROOT/'results'
+    bundle = {
+        'predictions': pd.read_csv(result/'predictions.csv', index_col='timestamp', parse_dates=True),
+        'metrics': pd.read_csv(result/'metrics.csv', index_col='model'),
+        'plans': pd.read_csv(result/'staffing_plans.csv'),
+        'daily': pd.read_csv(result/'staffing_daily.csv'),
+        'totals': pd.read_csv(result/'staffing_metrics.csv', index_col='method'),
+        'summary': json.loads((result/'summary.json').read_text()),
+        'operations': json.loads((result/'staffing_summary.json').read_text()),
+    }
+    return validate_saved_analysis(bundle)
 
 
 # ==================== GUROBI OPERATIONS PLANNING ====================
@@ -851,9 +1016,14 @@ STAFFING = {'throughput':40., 'hourly_wage':20., 'under_cost':5., 'excess_cost':
 
 def staffing_cost(actual, workers, assumptions=None):
     """Evaluate a frozen plan; actuals never enter optimization."""
-    p=dict(STAFFING if assumptions is None else assumptions)
-    capacity=np.repeat(np.asarray(workers)*p['throughput'],p['shift_hours'])
-    actual=np.asarray(actual,dtype=float)
+    p = validate_staffing_assumptions(assumptions)
+    actual = validate_hourly_values(actual, 'Actuals')
+    workers = np.asarray(workers, dtype=float)
+    require(workers.shape == (6,) and np.isfinite(workers).all()
+            and np.equal(workers,np.floor(workers)).all() and (workers >= 0).all()
+            and (workers <= p['max_per_shift']).all() and workers.sum() <= p['assignment_budget'],
+            'Supply six feasible nonnegative integer worker-shift assignments')
+    capacity=np.repeat(workers*p['throughput'],int(p['shift_hours']))
     return {'wages':float(np.sum(workers)*p['shift_hours']*p['hourly_wage']),
             'shortage_units':float(np.maximum(actual-capacity,0).sum()),
             'excess_units':float(np.maximum(capacity-actual,0).sum()),
@@ -864,13 +1034,9 @@ def staffing_cost(actual, workers, assumptions=None):
 
 def optimize_staffing(forecast, assumptions=None):
     """Six integer 4-hour shift assignments; only 24 issued forecasts are inputs."""
+    p = validate_staffing_assumptions(assumptions)
+    f = validate_hourly_values(forecast, 'Forecast')
     import gurobipy as gp
-    p=dict(STAFFING if assumptions is None else assumptions)
-    f=np.asarray(forecast,dtype=float)
-    if f.shape!=(24,) or not np.isfinite(f).all() or (f<0).any():
-        raise ValueError('Supply 24 finite nonnegative hourly forecasts')
-    if p['shift_hours']!=4 or any(v<=0 for v in p.values()):
-        raise ValueError('Use positive assumptions and four-hour shifts')
     try:
         with gp.Env(empty=True) as env:
             env.setParam('OutputFlag',0);env.start()
@@ -894,9 +1060,10 @@ def optimize_staffing(forecast, assumptions=None):
                                 'bound':float(model.ObjBound),'mip_gap':float(model.MIPGap),
                                 'variables':model.NumVars,'constraints':model.NumConstrs}
     except gp.GurobiError as error:
-        raise RuntimeError('Gurobi needs a usable license. Install gurobipy and use its available '
-                           'restricted license for this small model, or configure your own license securely. '
-                           'No alternative solver or invented solution was used.') from error
+        if error.errno == gp.GRB.Error.NO_LICENSE:
+            raise RuntimeError('Gurobi license unavailable. Configure a valid license securely; '
+                               'no substitute solver or invented result is used.') from error
+        raise RuntimeError(f'Gurobi solver error {error.errno}; no certified solution returned') from error
 
 
 def run_optimization(predictions):
@@ -988,6 +1155,181 @@ def test_optimizer_rejects_invalid_forecast():
         raise AssertionError('Invalid forecast accepted')
 
 
+def test_explicit_source_errors_do_not_download():
+    import tempfile, sys, unittest
+    from unittest.mock import patch
+    original = (ROOT/'data/hour.csv').read_bytes()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        with patch.object(sys.modules[__name__], 'ROOT', root), \
+             patch('urllib.request.urlopen', side_effect=AssertionError('Unexpected network access')):
+            for cached in [False, True]:
+                if cached:
+                    (root/'data').mkdir(exist_ok=True)
+                    (root/'data/hour.csv').write_bytes(original)
+                with unittest.TestCase().assertRaises(FileNotFoundError):
+                    ensure_source_data(root/'missing.csv')
+                bad = root/'bad.csv';bad.write_text('invalid source')
+                with unittest.TestCase().assertRaisesRegex(ValueError, 'Explicit'):
+                    ensure_source_data(bad)
+
+
+def test_feature_grid_rejects_ambiguous_timestamps():
+    import unittest
+    _, grid = load_data()
+    for invalid in [grid.iloc[::-1], grid.drop(grid.index[1]),
+                    pd.concat([grid.iloc[:1],grid]), grid.tz_localize('UTC')]:
+        with unittest.TestCase().assertRaisesRegex(ValueError, 'hourly grid'):
+            make_features(invalid)
+
+
+def test_unknown_pipeline_rejected():
+    import unittest
+    with unittest.TestCase().assertRaises(ValueError):
+        build_pipeline('typo')
+
+
+def test_cost_rejects_invalid_actuals_and_plans():
+    import unittest
+    for actual in [10, np.zeros((24,1)), np.full(24,np.nan), np.full(24,-1.)]:
+        with unittest.TestCase().assertRaises(ValueError):
+            staffing_cost(actual, np.zeros(6))
+    for plan in [np.zeros(5), np.ones(6)*.5, np.full(6,9), np.full(6,-1), np.full(6,np.inf)]:
+        with unittest.TestCase().assertRaises(ValueError):
+            staffing_cost(np.zeros(24),plan)
+
+
+def test_assumptions_rejected_before_solver():
+    import unittest
+    from unittest.mock import patch
+    invalid = [{**STAFFING,'under_cost':v} for v in [np.nan,np.inf,0,-1,True,'5']]
+    invalid += [{**STAFFING,'assignment_budget':1.5}, {**STAFFING,'shift_hours':8}, {'under_cost':5}]
+    with patch('gurobipy.Env', side_effect=AssertionError('Invalid input reached solver')):
+        for assumptions in invalid:
+            with unittest.TestCase().assertRaises(ValueError):
+                optimize_staffing(np.zeros(24),assumptions)
+
+
+def test_solver_error_classification():
+    import unittest, gurobipy as gp
+    from unittest.mock import patch
+    for code, message in [(gp.GRB.Error.NO_LICENSE,'license unavailable'),
+                          (gp.GRB.Error.OUT_OF_MEMORY,'solver error')]:
+        with patch('gurobipy.Env',side_effect=gp.GurobiError(code,'test failure')):
+            with unittest.TestCase().assertRaisesRegex(RuntimeError,message):
+                optimize_staffing(np.zeros(24))
+
+
+def test_prediction_artifacts_reject_tampering():
+    import copy, unittest
+    pristine = load_saved_analysis()
+    for change in ['timestamp','actual','baseline','metric','bounds']:
+        invalid = copy.deepcopy(pristine)
+        if change=='timestamp':invalid['predictions'].index += pd.Timedelta(hours=1)
+        elif change=='actual':invalid['predictions'].iloc[0,0] += 1
+        elif change=='baseline':invalid['predictions'].loc[:, 'seasonal_naive'] += 1
+        elif change=='metric':invalid['metrics'].loc['ridge','MAE'] += 1
+        else:invalid['predictions'].loc[:, 'lower_90'] = invalid['predictions'].upper_90+1
+        with unittest.TestCase().assertRaises(ValueError):
+            validate_saved_analysis(invalid)
+
+
+def test_staffing_artifacts_reject_missing_duplicate_and_fractional_plans():
+    import copy, unittest
+    pristine = load_saved_analysis()
+    for change in ['missing_day','duplicate_day','missing_shift','fractional_shift','component','assumptions']:
+        invalid = copy.deepcopy(pristine)
+        if change=='missing_day':invalid['daily'] = invalid['daily'].iloc[1:]
+        elif change=='duplicate_day':invalid['daily'] = pd.concat([invalid['daily'],invalid['daily'].iloc[:1]])
+        elif change=='missing_shift':invalid['plans'] = invalid['plans'].iloc[1:]
+        elif change=='fractional_shift':
+            invalid['plans']['assignments'] = invalid['plans'].assignments.astype(float)
+            invalid['plans'].loc[0,'assignments'] += .5
+        elif change=='component':invalid['daily'].loc[0,'wages'] += 1
+        else:invalid['operations']['assumptions']['throughput'] += 1
+        with unittest.TestCase().assertRaises(ValueError):
+            validate_saved_analysis(invalid)
+
+
+def test_check_reports_preserve_historical_evidence():
+    import tempfile, unittest
+    before = (ROOT/'results/safety_tests.json').read_bytes()
+    with unittest.TestCase().assertRaises(ValueError):
+        write_check_report({'tests':0},ROOT/'results/safety_tests.json')
+    assert before == (ROOT/'results/safety_tests.json').read_bytes()
+    with tempfile.TemporaryDirectory() as tmp:
+        path = Path(tmp)/'new-report.json'
+        write_check_report({'tests':1},path)
+        assert json.loads(path.read_text()) == {'tests':1}
+        with unittest.TestCase().assertRaises(ValueError):
+            write_check_report({'tests':2},path)
+
+
+def test_optimized_python_cannot_report_false_success():
+    import subprocess, sys
+    for action in ['--self-test','--verify']:
+        run = subprocess.run([sys.executable,'-O',str(Path(__file__).resolve()),action],
+                             capture_output=True,text=True,timeout=45)
+        assert run.returncode != 0 and 'without Python -O' in run.stderr
+
+
+def run_demo_tests(report_file=None):
+    """Separate UI regression suite; the viewer must never start a solver."""
+    if not __debug__:
+        raise RuntimeError('Run tests without Python -O; assertions must remain enabled')
+    import unittest, sys
+    from unittest.mock import patch
+    from streamlit.testing.v1 import AppTest
+
+    def test_forecast_controls_and_gaps():
+        app = AppTest.from_file(str(Path(__file__).resolve()),default_timeout=45).run()
+        assert not app.exception
+        assert not any('All fitted transforms live in pipelines' in block.value for block in app.markdown)
+        assert not any(block.value.strip() == 'None' for block in app.code)
+        assert [m.value for m in app.metric[:3]] == ['64.10','10.90%','1,302']
+        assert any('24 of 24' in c.value for c in app.caption)
+        app.selectbox(key='forecast_model').set_value('boosting').run()
+        assert not app.exception and any('85.64%' in c.value for c in app.caption)
+        app.checkbox[0].uncheck().run()
+        app.selectbox(key='forecast_day').set_value('2012-11-05').run()
+        assert not app.exception and any('1 of 24' in c.value for c in app.caption)
+        app.selectbox(key='forecast_model').set_value('seasonal_naive').run()
+        assert not app.exception and not app.checkbox
+
+    def test_staffing_controls_and_costs():
+        app = AppTest.from_file(str(Path(__file__).resolve()),default_timeout=45).run()
+        app.selectbox(key='plan_model').set_value('ridge').run()
+        expected = pd.read_csv(ROOT/'results/staffing_daily.csv').query("date == '2012-11-07' and method == 'ridge'").iloc[0]
+        assert not app.exception and app.metric[-1].value == f'${expected.total_cost:,.0f}'
+        assert len(app.dataframe[-1].value) == 6
+
+    def test_missing_and_inconsistent_artifacts_fail_closed():
+        module = sys.modules[__name__]
+        for error in [FileNotFoundError('/private/path'),ValueError('inconsistent artifacts')]:
+            with patch.object(module,'load_saved_analysis',side_effect=error):
+                # AppTest isolates globals, so use an importable entry in this process.
+                import bike_sharing
+                with patch.object(bike_sharing,'load_saved_analysis',side_effect=error):
+                    app = AppTest.from_string('from bike_sharing import render_dashboard\nrender_dashboard()',default_timeout=45).run()
+            assert not app.exception and len(app.error)==1 and not app.metric
+            assert '/private/path' not in app.error[0].value
+
+    def test_viewer_never_requests_solver_license():
+        with patch('gurobipy.Env',side_effect=AssertionError('Viewer requested a solver license')):
+            app = AppTest.from_file(str(Path(__file__).resolve()),default_timeout=45).run()
+        assert not app.exception and len(app.metric)==4
+
+    checks = [test_forecast_controls_and_gaps,test_staffing_controls_and_costs,
+              test_missing_and_inconsistent_artifacts_fail_closed,test_viewer_never_requests_solver_license]
+    suite = unittest.TestSuite(unittest.FunctionTestCase(check) for check in checks)
+    result = unittest.TextTestRunner(verbosity=2).run(suite)
+    report = {'suite':'demo','tests':result.testsRun,'failures':len(result.failures),
+              'errors':len(result.errors),'skipped':len(result.skipped)}
+    write_check_report(report,report_file)
+    if not result.wasSuccessful():raise SystemExit(1)
+    return report
+
+
 # ==================== INTERACTIVE PORTFOLIO DEMO ====================
 def render_dashboard():
     """Explore saved historical outputs; no retraining, live data, or solver calls."""
@@ -1002,15 +1344,11 @@ def render_dashboard():
     st.info('Historical demo: explore saved 2012 forecasts and hypothetical staffing plans. '
             'This app does not predict current demand or report realized savings.')
     try:
-        p = pd.read_csv(ROOT/'results/predictions.csv', index_col='timestamp', parse_dates=True)
-        m = pd.read_csv(ROOT/'results/metrics.csv', index_col='model')
-        plans = pd.read_csv(ROOT/'results/staffing_plans.csv')
-        costs = pd.read_csv(ROOT/'results/staffing_metrics.csv', index_col='method')
-        daily = pd.read_csv(ROOT/'results/staffing_daily.csv')
-    except (OSError, ValueError, KeyError) as exc:
-        st.error('The demo needs the saved results folder from this repository. '
-                 'Clone the complete repository before starting it.')
-        st.caption(str(exc))
+        saved = load_saved_analysis()
+        p, m, plans, costs, daily = (saved[k] for k in ['predictions','metrics','plans','totals','daily'])
+    except (OSError, ValueError, KeyError, TypeError):
+        st.error('Saved results are missing or inconsistent. Restore the complete audited repository '
+                 'and run python bike_sharing.py --verify before viewing the demo.')
         st.stop()
 
     labels = {'seasonal_naive':'Same hour last week', 'ridge':'Ridge regression',
@@ -1044,7 +1382,7 @@ def render_dashboard():
                                     name='Upper bound',showlegend=False,connectgaps=False))
             fig.add_trace(go.Scatter(x=grid.index,y=grid.lower_90,mode='lines',line={'width':0},
                                     fill='tonexty',name='90% nominal interval',connectgaps=False))
-            st.caption('Nominal coverage: 90%; measured test coverage: 85.64%. '
+            st.caption(f"Nominal coverage: 90%; measured test coverage: {saved['summary']['intervals']['empirical_coverage']:.2%}. "
                        'Temporal dependence limits the standard conformal guarantee.')
         fig.update_layout(xaxis_title='Target hour', yaxis_title='Completed rentals',
                           legend={'orientation':'h'}, template='plotly_white')
@@ -1054,12 +1392,12 @@ def render_dashboard():
             columns={'MAE_improvement_pct':'MAE reduction vs. baseline (%)'})
         st.dataframe(comparison.round(2), width='stretch')
         st.download_button('Download this day’s scored forecasts', day.to_csv().encode(),
-                           file_name=f'bike-forecasts-{date}.csv', mime='text/csv')
+                           file_name=f'bike-forecasts-{date}.csv', mime='text/csv', on_click='ignore')
     with staffing:
         st.write('Forecasts feed a Gurobi model with six four-hour shifts and at most 48 '
                  'worker-shift assignments per day. Actual rentals evaluate the plan afterward.')
-        st.caption('Assumptions: 40 rental-service units per worker-hour; $20 hourly wage; '
-                   '$5 per shortage unit and $1 per excess unit. Assignments are not unique '
+        st.caption('Assumptions: 40 rental-service units per worker-hour; USD 20 hourly wage; '
+                   'USD 5 per shortage unit and USD 1 per excess unit. Assignments are not unique '
                    'employees or numbers of bicycles. The viewer reads saved solver outputs.')
         totals=costs.reset_index()
         totals['Planning method']=totals.method.map(labels)
@@ -1104,4 +1442,7 @@ if __name__ == '__main__':
         in_dashboard = get_script_run_ctx(suppress_warning=True) is not None
     else:
         in_dashboard = False
-    render_dashboard() if in_dashboard else main()
+    if in_dashboard:
+        render_dashboard()
+    else:
+        main()
