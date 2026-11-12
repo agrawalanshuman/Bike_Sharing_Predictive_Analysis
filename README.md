@@ -112,7 +112,7 @@ licensing fails or optimality is not certified; it does not silently replace Gur
 | Model interpretation and uncertainty | Explain individual predictions with SHAP and measure MAPIE interval coverage rather than assuming nominal coverage |
 | Operations research with gurobipy | Formulate integer staffing decisions, enforce capacity and budget constraints, and verify solver optimality |
 | Visualization and communication | Present Matplotlib diagnostics, Plotly charts, a Streamlit demo, and optional model-card and report exports |
-| Reproducible Python development | Package the workflow in one Python file with pinned dependencies, 17 automated checks, and artifact verification |
+| Reproducible Python development | Package the workflow in one Python file with pinned dependencies, 27 automated core checks and four demo tests, and artifact verification |
 
 ## What this project can be used for
 
@@ -138,8 +138,12 @@ python -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python bike_sharing.py --self-test
+python bike_sharing.py --test-demo
+python bike_sharing.py --verify
 python bike_sharing.py
 ```
+
+**Checks are read-only by default.** `--self-test`, `--test-demo`, and `--verify` do not rewrite the historical JSON evidence in `results/`. Use `--report-file run_outputs/review/checks.json` with one of those actions to save a new report; choose a new filename for each run. Do not use Python `-O` for checks. `--data-file` explicitly selects a local source and fails on a missing or altered file; automatic download is used only when no explicit path is given.
 
 The default run recomputes the analysis and writes fresh outputs under `run_outputs/`. The saved portfolio results remain in `results/` and `visualizations/`. Reports can be generated locally on demand. To choose an output location or provide the original data explicitly:
 
@@ -149,7 +153,7 @@ python bike_sharing.py --data-file data/hour.csv --output-dir run_outputs
 
 The loader uses the supplied real source file or downloads the checksum-verified UCI data. It never substitutes synthetic observations. The fixed random seed is 835 wherever randomness applies.
 
-To refresh the executed notebook or generate optional presentation documents from the repository root, then verify the saved artifacts:
+**Rebuilding is different from checking:** the following notebook/document commands intentionally regenerate local artifacts. Run them in a separate checkout when you want to preserve the saved experiment. To refresh from the repository root:
 
 ```bash
 python bike_sharing.py --execute-notebooks
@@ -157,7 +161,7 @@ python bike_sharing.py --build-documents --output-dir .
 python bike_sharing.py --verify
 ```
 
-The 17 checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Artifact checks validate notebook outputs and consistency of exported results. When optional PDFs are present, their two-page memo and ten-slide presentation formats are checked with the pinned `pypdf` dependency.
+The 27 core checks cover exact timestamp lags, historical rolling windows, target-day perturbations, excluded leakage columns, chronological separation, missing targets, training-only preprocessing and the 24-hour forecasting API. Four optimization checks cover brute-force objective agreement, feasibility and cost arithmetic, forecast-only inputs with zero demand, and invalid-input rejection. Ten additional regression checks reject malformed time grids, invalid inputs, inconsistent artifacts, mislabeled solver errors, and tests run with assertions disabled. Four separate Streamlit tests exercise selections, missing-hour display, cost accuracy, invalid artifacts, and viewing without a solver license. Artifact checks reconcile timestamps and actuals with the audited source, verify complete policy/shift keys, and recompute saved cost components and sensitivity tables. When optional PDFs are present, their two-page memo and ten-slide presentation formats are checked with the pinned `pypdf` dependency.
 
 ## Interactive demo
 
@@ -178,11 +182,26 @@ Open the [analysis notebook in Colab](https://colab.research.google.com/github/a
 
 The standalone workflow is validated locally. Execution inside Google's hosted Colab service has not been independently verified.
 
+## Architecture and role relevance
+
+The CLI and notebook use the same implementation: **audited CSV → hourly features → chronological model fitting/calibration → held-out forecasts → Gurobi scenarios → saved results → historical demo**. The viewer validates saved artifacts against the public source before displaying metrics. It fits no model and starts no solver.
+
+| Career direction | Evidence you can discuss | Boundary |
+|---|---|---|
+| Applied AI Engineer | Reusable forecast function, validated inputs, tested model-to-decision workflow, interactive interface, CI checks | A batch research workflow; no model-serving API, production deployment, or LLM application |
+| Data Scientist | Baselines, leakage prevention, temporal validation, tuning, calibration, SHAP, and sliced errors | One historical dataset and seasonal test window; future accuracy remains unverified |
+| Data Engineer | Source checksum, hourly data contract, explicit missingness, reproducible exports, and cross-file reconciliation | Local pandas processing; no SQL warehouse, Spark/Databricks pipeline, or SAP integration |
+| Supply Chain Analytics Consultant | Demand-to-capacity formulation, integer decisions, solver certificates, asymmetric costs and sensitivity analysis | Hypothetical system-wide throughput; no station allocation or validated operating savings |
+
+SQL, Databricks, and SAP are relevant background for future integrations, not implemented project features. The [technical review](docs/TECHNICAL_REVIEW.md) records the baseline inventory, prioritized plan, confirmed results, assumptions, commands, and remaining work. The [CI workflow](.github/workflows/validate.yml) runs core tests, artifact checks and demo tests; it does not deploy the application.
+
 ## Repository guide
 
 | Location | Contents |
 |---|---|
-| `bike_sharing.py` | Sole Python source file and command-line interface |
+| `bike_sharing.py` | Sole Python source file, command-line interface, demo and embedded tests |
+| `.github/workflows/validate.yml` | Python 3.12 verification workflow with read-only repository permissions |
+| `docs/TECHNICAL_REVIEW.md` | Engineering review, evidence and implementation limitations |
 | `analysis.ipynb` | Executed integrated analysis with visible results |
 | `data/` | Original hourly source data and attribution |
 | `results/` | Predictions, metrics, tuning results, intervals, slices and SHAP values |
@@ -194,6 +213,12 @@ The standalone workflow is validated locally. Execution inside Google's hosted C
 Observed counts measure completed rental trips. Customers unable to rent a bike or find a dock are not recorded as unmet demand. Aggregate trips also do not reveal station inventories or the number of unique bicycles needed. The project supports system-wide planning research; it cannot allocate bicycles to individual stations.
 
 The analysis assumes hourly counts are finalized by the prior day's 11:59 PM issue time and calendar information is known. Reporting delays would require longer lags. Weather shocks, special events, missing history and trend changes remain failure modes. The test period covers autumn and winter only. SHAP explains the fitted model's predictions rather than causal effects. Before operational use, validate the policy prospectively, confirm data latency and planning constraints, and monitor error, missingness and interval coverage.
+
+## Licensing and security
+
+The UCI dataset is distributed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/); preserve its attribution when reusing it. Gurobi has separate proprietary license terms. This repository currently has **no source-code license**; public visibility alone does not grant an open-source license. See [data provenance](data/README.md) and the [technical review](docs/TECHNICAL_REVIEW.md).
+
+Use only public, non-sensitive data with this demo. Keep credentials and `.streamlit/secrets.toml` out of Git. The viewer accepts no file uploads and stops before displaying metrics if saved data are missing or inconsistent. Dependency pins support reproducibility but do not replace ongoing security updates; the review records the audit scope and tested versions.
 
 ## Authorship and attribution
 

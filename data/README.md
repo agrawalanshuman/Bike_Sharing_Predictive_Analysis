@@ -14,4 +14,4 @@ A complete hourly index contains 17,544 slots, exposing 165 missing observations
 
 Citation: Fanaee-T, Hadi, and João Gama (2013), “Event labeling combining ensemble detectors and background knowledge,” *Progress in Artificial Intelligence*. DOI: https://doi.org/10.1007/s13748-013-0040-3.
 
-The dataset is external research material credited to its original authors. This repository does not assign a new license to the source data. Please retain this attribution when reusing the dataset.
+The [UCI dataset page](https://archive.ics.uci.edu/dataset/275/bike+sharing+dataset) lists the data under **Creative Commons Attribution 4.0 International ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/))**, checked during the November 11, 2026 review. Retain the attribution and identify any changes when reusing the data. The tracked `hour.csv` remains unmodified. This data license is separate from Gurobi’s terms and from the project’s source code, for which no license has been selected.
