@@ -1,5 +1,7 @@
 # Technical review — Bike Sharing Predictive Analysis
 
+**Historical review phase:** this document records the initial single-file review. The November 12 follow-up explicitly authorized module separation; see the [current technical deep dive](ARCHITECTURE.md) for the modular implementation, pytest suite, solver-independent CI, exact reproduction findings and measured browser flow.
+
 Review date: November 11, 2026. Baseline commit: `fd105e8e7eebd16401046d27531e1cfcf2d9e4bf`.
 Reviewer: OpenAI Codex, supporting Anshuman. Claims below distinguish executed checks from design assumptions. This review preserves the original forecasting experiment, saved outputs, and single-Python-file constraint.
 
@@ -115,7 +117,7 @@ Commands below were run from the repository root. The clean interpreter was `/tm
 
 The initial dependency-audit attempt hit a read-only default cache directory; rerunning with `XDG_CACHE_HOME=/tmp/bike-review-cache` completed. An initial browser sequence timed out on a dropdown after prior interactions; isolated staffing navigation and the repeated browser checks succeeded. Screenshots also exposed the stray module text and `None` display that were corrected. No failed attempt is represented as a successful check.
 
-GitHub Actions execution is **unfinished until a remote run is observed**. Local commands equivalent to its test steps passed. This status must not be confused with the completed local tests or with deployment approval.
+The phase-one [GitHub Actions run](https://github.com/agrawalanshuman/Bike_Sharing_Predictive_Analysis/actions/runs/43125712552) completed successfully for commit `6b0979dd0db2b9219c4048453d4c8316e93c3fde`. This verifies that reviewed single-file revision; the later modular workflow is a separate revision. Neither run grants or performs deployment approval.
 
 ## Preserved observations and limitations
 
@@ -125,7 +127,7 @@ GitHub Actions execution is **unfinished until a remote run is observed**. Local
 - The demo is a saved historical-results viewer. **Public hosting and Google-hosted Colab are unfinished/unverified.** No production or public deployment was performed.
 - Reporting latency, staffing throughput, wage/penalty assumptions, labor rules and future generalization need operational evidence. No station inventories or unmet-demand observations are present. The retrospective optimization extension is not a fresh policy holdout.
 - Runtime validation is deliberately tied to this audited experiment; it is not a general ingestion service for arbitrary datasets. The single-file architecture satisfies the project constraint but couples plotting, modeling, tests and UI imports. Modular packaging is a future trade-off if that constraint changes.
-- Testing covers Linux/Python 3.12.14 locally. Windows, other Python versions, remote CI, hosted Colab and hosted Streamlit are not established by these runs. Colab clones moving `main`, so a commit-pinned environment would improve repeatability.
+- Testing covers Linux/Python 3.12.14 locally. Windows, other Python versions, hosted Colab and hosted Streamlit are not established by these runs. The phase-one remote CI result is linked above. Colab clones moving `main`, so a commit-pinned environment would improve repeatability.
 - Package versions are pinned but artifacts are not hash-locked; audit findings can change over time. The fixed HTTPS download is checksum-verified, but transport/decompression size limits are not implemented. Current tracked-file credential scanning is heuristic and does not audit all historical commits or third-party source code.
 - No source-code license was selected. SQL/Databricks/SAP integrations, an HTTP inference API, model registry, production monitoring and prospective business validation remain optional future work, not portfolio claims.
 

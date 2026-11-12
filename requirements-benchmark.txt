@@ -1,0 +1,4 @@
+# Optional browser tooling; install Chromium separately as documented.
+-r requirements.txt
+playwright==1.65.1
+greenlet==3.5.6

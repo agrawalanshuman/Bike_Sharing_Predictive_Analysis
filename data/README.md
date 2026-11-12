@@ -6,7 +6,7 @@
 - Original archive: https://archive.ics.uci.edu/static/public/275/bike+sharing+dataset.zip
 - Hourly-file SHA-256: `e03de4ee4ef4dc376ac6e04bf829673c6269e8eba5c60fa121640fa2f829504f`
 
-The loader in [`bike_sharing.py`](../bike_sharing.py) verifies this checksum before modeling. A changed local or downloaded source must be investigated; it is not silently substituted or assigned a new expected checksum.
+The loader in [`bike_share/data.py`](../bike_share/data.py) verifies this checksum before modeling. A changed local or downloaded source must be investigated; it is not silently substituted or assigned a new expected checksum.
 
 `cnt` is total completed rentals in the hour. `casual` and `registered` are its components and are excluded from predictors. The date and hour construct the timeline. Calendar information is assumed available before issuance. Observed temperature, apparent temperature, humidity, wind speed and weather situation are excluded from forecast-time inputs; observed weather may describe errors after the forecasts are made.
 
