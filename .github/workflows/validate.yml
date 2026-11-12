@@ -1,0 +1,39 @@
+name: Validate portfolio
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      OMP_NUM_THREADS: '2'
+      OPENBLAS_NUM_THREADS: '2'
+      MPLBACKEND: Agg
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: 'false'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip check
+      - name: Forecasting, optimization and regression checks
+        run: python bike_sharing.py --self-test --report-file "$RUNNER_TEMP/tests.json"
+      - name: Verify saved evidence without rewriting it
+        run: python bike_sharing.py --verify --report-file "$RUNNER_TEMP/verification.json"
+      - name: Historical demo regression checks
+        run: python bike_sharing.py --test-demo --report-file "$RUNNER_TEMP/demo-tests.json"
+      - name: Confirm checks leave the repository unchanged
+        run: git diff --exit-code
